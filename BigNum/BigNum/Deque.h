@@ -8,7 +8,12 @@ class Deque
 	size_t sz_deque;
 	size_t ix_start;
 
-	size_t GetBufferIdx(int ix_deque)
+	bool IdxIsValid(int ix_buffer)
+	{
+		return ix_buffer >= 0 && ix_buffer < buffer.size();
+	}
+
+	int GetBufferIdx(int ix_deque)
 	{
 		int ix_tmp = ix_deque + ix_start;
 		if (ix_tmp >= (int)buffer.size()) {
@@ -16,19 +21,14 @@ class Deque
 		} else if (ix_tmp < 0) {
 			ix_tmp = ix_tmp + buffer.size();
 		}
-		return (size_t)ix_tmp;
-	}
-
-	bool IsFull()
-	{
-		return sz_deque >= buffer.size();
+		return ix_tmp;
 	}
 
 	void Grow()
 	{
 		if (IsFull()) {
 			// Grow the buffer
-			size_t newBufferSize = sz_deque > 0 ? sz_deque * 2 : 16;
+			size_t newBufferSize = buffer.size() ? buffer.size() * 2 : 16;
 			std::vector<DequeType> newBuffer(newBufferSize);
 			for (size_t i = 0; i < buffer.size(); i++) {
 				newBuffer[i] = Get(i);
@@ -47,12 +47,13 @@ public:
 	}
 	~Deque(void) { }
 
-	DequeType Get(size_t ix_deque)
+	DequeType Get(int ix_deque)
 	{
-		if (ix_deque >= sz_deque) {
-			throw "Out of bounds.";
+		int ix_buffer = GetBufferIdx(ix_deque);
+		if (IdxIsValid(ix_buffer)) {
+			return buffer[ix_buffer];
 		} else {
-			return buffer[GetBufferIdx(ix_deque)];
+			throw "Out of bounds.";
 		}
 	}
 
@@ -88,7 +89,7 @@ public:
 
 	bool PopBack()
 	{
-		if (sz_deque > 0) {
+		if (!IsEmpty()) {
 			sz_deque--;
 			
 			return true;
@@ -99,7 +100,7 @@ public:
 
 	bool PopFront()
 	{
-		if (sz_deque > 0) {
+		if (!IsEmpty()) {
 			sz_deque--;
 			ix_start = GetBufferIdx(1);
 
@@ -107,6 +108,21 @@ public:
 		} else {
 			return false;
 		}
+	}
+
+	bool IsFull()
+	{
+		return sz_deque >= buffer.size();
+	}
+
+	bool IsEmpty()
+	{
+		return sz_deque > 0;
+	}
+
+	size_t Size()
+	{
+		return sz_deque;
 	}
 
 	std::string ToString()
