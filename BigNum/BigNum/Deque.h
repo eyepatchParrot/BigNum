@@ -117,7 +117,7 @@ public:
 
 	bool IsEmpty()
 	{
-		return sz_deque > 0;
+		return sz_deque <= 0;
 	}
 
 	size_t Size()
