@@ -15,5 +15,6 @@
 # Visual Studio
 *.ipch
 *.sdf
+*.opensdf
 *.pch
 Debug/
