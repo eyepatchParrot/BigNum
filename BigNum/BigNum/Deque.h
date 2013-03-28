@@ -41,7 +41,7 @@ class Deque
 			buffer = newBuffer;
 			ix_start = 0;
 		}
-		sz_deque++;
+		sz_deque += numElements;
 	}
 
 public:
