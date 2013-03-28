@@ -12,14 +12,14 @@ namespace TestBigNum
 		
 		TEST_METHOD(TestDequePushBack)
 		{
-			Deque<int, NULL> testDeque;
+			Deque<int> testDeque(NULL);
 			const int pushBackIterations = 32;
 			for (int i = 0; i < pushBackIterations; i++) {
 				testDeque.PushBack(i);
 			}
 			int sz_expected = pushBackIterations;
 			Assert::AreEqual(sz_expected, (int)testDeque.Size());
-			for (int i = 0; i < testDeque.Size(); i++) {
+			for (int i = 0; i < (int)testDeque.Size(); i++) {
 				Assert::AreEqual(i, testDeque.Get(i));
 			}
 
@@ -29,7 +29,7 @@ namespace TestBigNum
 			}
 			sz_expected -= popBackIterations;
 			Assert::AreEqual(sz_expected, (int)testDeque.Size());
-			for (int i = 0; i < testDeque.Size(); i++) {
+			for (int i = 0; i < (int)testDeque.Size(); i++) {
 				Assert::AreEqual(i, testDeque.Get(i));
 			}
 
@@ -39,7 +39,7 @@ namespace TestBigNum
 			}
 			sz_expected += pushFrontIterations;
 			Assert::AreEqual(sz_expected, (int)testDeque.Size());
-			for (int i = 0; i < testDeque.Size(); i++) {
+			for (int i = 0; i < (int)testDeque.Size(); i++) {
 				Assert::AreEqual(i - pushFrontIterations, testDeque.Get(i));
 			}
 
@@ -49,7 +49,7 @@ namespace TestBigNum
 			}
 			sz_expected -= popFrontIterations;
 			Assert::AreEqual(sz_expected, (int)testDeque.Size());
-			for (int i = 0; i < testDeque.Size(); i++) {
+			for (int i = 0; i < (int)testDeque.Size(); i++) {
 				Assert::AreEqual(i - pushFrontIterations + popFrontIterations, testDeque.Get(i));
 			}
 		}

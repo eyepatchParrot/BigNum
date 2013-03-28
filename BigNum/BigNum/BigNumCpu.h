@@ -2,10 +2,12 @@
 
 #include "stdafx.h"
 
-template <class Limb, std::string (*LimbToString)(Limb)>
+template <class Limb>
 class BigNumCpu
 {
-	Deque<Limb, LimbToString> limbs;
+	std::string (*LimbToStringWithZero)(Limb);
+	std::string (*LimbToStringNoZero)(Limb);
+	Deque<Limb> limbs;
 	// the placeValue of limbs[0]
 	int exponent;
 
@@ -20,10 +22,12 @@ class BigNumCpu
 	}
 
 public:
-	BigNumCpu(void)
+	BigNumCpu(std::string (*LimbToStringWithZeroArg)(Limb), std::string (*LimbToStringNoZeroArg)(Limb))
 	{
+		LimbToStringWithZero = LimbToStringWithZeroArg;
+		LimbToStringNoZero = LimbToStringNoZeroArg;
 		exponent = 0;
-		limbs = Deque<Limb>(1, 0);
+		limbs = Deque<Limb>(LimbToStringWithZero);
 	}
 
 	~BigNumCpu(void) { }
@@ -49,12 +53,13 @@ public:
 			limbs.PushBack(value);
 			exponent = placeValue;
 		} else {
-			while (placeValue < exponent) {
+			while (placeValue < Min()) {
 				limbs.PushFront(0);
 				exponent--;
 			}
-			while (placeValue > (exponent + limbs.Size() - 1)) {
+			while (placeValue > Max()) {
 				limbs.PushBack(0);
+				//exponent++;
 			}
 			limbs.Set(GetDequeIdx(placeValue), value);
 		}
@@ -75,18 +80,73 @@ public:
 		return BigNumCpu();
 	}
 
-	void Shl(int value)
+	BigNumCpu Shl(int value)
 	{
 	}
 
-	void Shr(int value)
+	BigNumCpu Shr(int value)
 	{
+	}
+
+	// Returns the highest place value
+	int Max()
+	{
+		return exponent + limbs.Size() - 1;
+	}
+
+	// Returns the lowest place value
+	int Min()
+	{
+		return exponent;
 	}
 
 	std::string ToString(void)
 	{
-		for (int i = 0; i < 
-		return std::string();
+		std::string retVal;
+
+		if (LimbToStringWithZero == NULL) {
+			throw "No ToStringWithZero func provided.";
+		} else if (LimbToStringNoZero == NULL) {
+			throw "No ToStringNoZero func provided.";
+		}
+
+		std::cout << limbs.ToString() << std::endl;
+
+		if (Max() < 0) {
+			retVal += "0 . ";
+		}
+
+		// Fill out the string with zeros until we reach the max place value.
+		for (int i = 0; i < 0 - Max() - 1; i++) {
+			// loop from place value
+			retVal += LimbToStringWithZero(0);
+		}
+
+		// Fill out the string with zeros until we reach the min place value.
+		for (int i = 0; i < Min(); i++) {
+			retVal += LimbToStringWithZero(0);
+		}
+
+		// Loop over the digits highest to lowest
+		for (size_t i = 0; i < limbs.Size(); i++) {
+			int ix_digit = limbs.Size() - 1 - i;
+			int placeValue = ix_digit + exponent;
+
+			Limb digitValue = limbs.Get(ix_digit);
+			if (placeValue >= 0 && placeValue == Max()) {
+				retVal += LimbToStringNoZero(digitValue);
+			} else {
+				retVal += LimbToStringWithZero(digitValue);
+			}
+			retVal += " ";
+
+			
+			if (i + 1 < limbs.Size() && placeValue == 0) {
+				retVal += ". ";
+			}
+		}
+
+		return retVal;
 	}
 
 	void Prune()

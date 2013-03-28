@@ -1,16 +1,17 @@
 #pragma once
 #include "stdafx.h"
 
-template<class DequeType, std::string (*DequeTypeToString)(DequeType)>
+template<class DequeType>
 class Deque
 {
+	std::string (*DequeTypeToString)(DequeType);
 	std::vector<DequeType> buffer;
 	size_t sz_deque;
 	size_t ix_start;
 
-	bool IdxIsValid(int ix_buffer)
+	bool IdxIsValid(int ix_deque)
 	{
-		return ix_buffer >= 0 && ix_buffer < (int)buffer.size();
+		return ix_deque >= 0 && ix_deque < (int)sz_deque;
 	}
 
 	int GetBufferIdx(int ix_deque)
@@ -24,11 +25,15 @@ class Deque
 		return ix_tmp;
 	}
 
-	void Grow()
+	void Grow(int numElements = 1)
 	{
-		if (IsFull()) {
+		if (IsFull(numElements - 1)) {
+			size_t newBufferSize = buffer.size() != 0 ? buffer.size() * 2 : 16;
+			while (buffer.size() + numElements > newBufferSize) {
+				newBufferSize = newBufferSize * 2;
+			}
+
 			// Grow the buffer
-			size_t newBufferSize = buffer.size() ? buffer.size() * 2 : 16;
 			std::vector<DequeType> newBuffer(newBufferSize);
 			for (size_t i = 0; i < buffer.size(); i++) {
 				newBuffer[i] = Get(i);
@@ -40,18 +45,39 @@ class Deque
 	}
 
 public:
-	Deque(void)
+	Deque(std::string (*DequeTypeToStringArg)(DequeType) = NULL)
 	{
+		DequeTypeToString = DequeTypeToStringArg;
 		sz_deque = 0;
 		ix_start = 0;
 	}
 	~Deque(void) { }
 
+	void Fill(int min, int max, DequeType value)
+	{
+		if (max <= min) {
+			throw "Out of bounds. max <= min.";
+		}
+
+		int numNegElements = min * -1;
+		numNegElements = numNegElements > 0 ? numNegElements : 0;
+		int numPosElements = max - sz_deque;
+		numPosElements = numPosElements > 0 ? numPosElements : 0;
+		int numNewElements = numNegElements + numPosElements;
+		Grow(numNewElements);
+
+		max += (min < 0 ? min * -1 : 0);
+		min = 0;
+
+		for (int i = 0; i < max; i++) {
+			Set(i, value);
+		}
+	}
+
 	DequeType Get(int ix_deque)
 	{
-		int ix_buffer = GetBufferIdx(ix_deque);
-		if (IdxIsValid(ix_buffer)) {
-			return buffer[ix_buffer];
+		if (IdxIsValid(ix_deque)) {
+			return buffer[GetBufferIdx(ix_deque)];
 		} else {
 			throw "Out of bounds.";
 		}
@@ -110,9 +136,9 @@ public:
 		}
 	}
 
-	bool IsFull()
+	bool IsFull(int withNewElements = 0)
 	{
-		return sz_deque >= buffer.size();
+		return (sz_deque + withNewElements) >= buffer.size();
 	}
 
 	bool IsEmpty()
@@ -128,6 +154,9 @@ public:
 	std::string ToString()
 	{
 		std::string retVal;
+		if (DequeTypeToString == NULL) {
+			throw "No string function provided.";
+		}
 
 		for (size_t i = 0; i < sz_deque; i++) {
 			retVal = retVal + (*DequeTypeToString)(Get(i)) + " ";
