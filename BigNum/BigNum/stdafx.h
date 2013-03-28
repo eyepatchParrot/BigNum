@@ -16,3 +16,5 @@
 #include <vector>
 #include <iostream>
 #include <string>
+#include "Deque.h"
+#include "utilities.h"

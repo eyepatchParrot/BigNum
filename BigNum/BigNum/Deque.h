@@ -10,7 +10,7 @@ class Deque
 
 	bool IdxIsValid(int ix_buffer)
 	{
-		return ix_buffer >= 0 && ix_buffer < buffer.size();
+		return ix_buffer >= 0 && ix_buffer < (int)buffer.size();
 	}
 
 	int GetBufferIdx(int ix_deque)
