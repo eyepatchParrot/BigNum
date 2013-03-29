@@ -1,6 +1,13 @@
 #pragma once
 #include "stdafx.h"
 
+class DequeIndexOutOfBounds : std::out_of_range
+{
+public:
+	DequeIndexOutOfBounds() :
+		std::out_of_range("Deque index is out of bounds.") { }
+};
+
 template<class DequeType>
 class Deque
 {
@@ -56,7 +63,7 @@ public:
 	void Fill(int min, int max, DequeType value)
 	{
 		if (max <= min || max < 0 || min > (int)sz_deque) {
-			throw "Out of bounds.";
+//			throw DequeIndexOutOfBounds();
 		}
 
 		int numNegElements = min * -1;
@@ -80,7 +87,7 @@ public:
 		if (IdxIsValid(ix_deque)) {
 			return buffer[GetBufferIdx(ix_deque)];
 		} else {
-			throw "Out of bounds.";
+			throw DequeIndexOutOfBounds();
 		}
 	}
 
@@ -156,7 +163,7 @@ public:
 	{
 		std::string retVal;
 		if (DequeTypeToString == NULL) {
-			throw "No string function provided.";
+			throw ToStringFuncExpected();
 		}
 
 		for (size_t i = 0; i < sz_deque; i++) {

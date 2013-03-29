@@ -9,8 +9,14 @@ namespace TestBigNum
 	TEST_CLASS(TestDeque)
 	{
 	public:
-		
-		TEST_METHOD(TestDequePushBack)
+		//TEST_METHOD(TestDequeFill)
+		//{
+		//	Deque<int> testDeque;
+		//	testDeque.Fill(4, 0, 7);
+		//	testDeque.Fill(-3, -2, 7);
+		//}
+
+		TEST_METHOD(TestDequeGeneral)
 		{
 			Deque<int> testDeque(NULL);
 			const int pushBackIterations = 32;
@@ -40,7 +46,8 @@ namespace TestBigNum
 			sz_expected += pushFrontIterations;
 			Assert::AreEqual(sz_expected, (int)testDeque.Size());
 			for (int i = 0; i < (int)testDeque.Size(); i++) {
-				Assert::AreEqual(i - pushFrontIterations, testDeque.Get(i));
+				int offset = -pushFrontIterations;
+				Assert::AreEqual(i + offset, testDeque.Get(i));
 			}
 
 			const int popFrontIterations = 5;
@@ -50,7 +57,8 @@ namespace TestBigNum
 			sz_expected -= popFrontIterations;
 			Assert::AreEqual(sz_expected, (int)testDeque.Size());
 			for (int i = 0; i < (int)testDeque.Size(); i++) {
-				Assert::AreEqual(i - pushFrontIterations + popFrontIterations, testDeque.Get(i));
+				int offset = popFrontIterations - pushFrontIterations;
+				Assert::AreEqual(i + offset, testDeque.Get(i));
 			}
 		}
 

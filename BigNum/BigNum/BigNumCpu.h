@@ -37,7 +37,7 @@ public:
 		if (IdxIsValid(placeValue)) {
 			return limbs[GetDequeIdx(placeValue)];
 		} else {
-			throw "Out of bounds.";
+			return 0;
 		}
 	}
 
@@ -103,10 +103,8 @@ public:
 	{
 		std::string retVal;
 
-		if (LimbToStringWithZero == NULL) {
-			throw "No ToStringWithZero func provided.";
-		} else if (LimbToStringNoZero == NULL) {
-			throw "No ToStringNoZero func provided.";
+		if (LimbToStringWithZero == NULL || LimbToStringNoZero == NULL) {
+			throw ToStringFuncExpected();
 		}
 
 		if (Max() < 0) {
