@@ -53,13 +53,12 @@ public:
 			limbs.PushBack(value);
 			exponent = placeValue;
 		} else {
-			while (placeValue < Min()) {
-				limbs.PushFront(0);
-				exponent--;
+			if (placeValue < Min()) {
+				limbs.Fill(GetDequeIdx(placeValue), GetDequeIdx(Min()), 0);
+				exponent = placeValue;
 			}
-			while (placeValue > Max()) {
-				limbs.PushBack(0);
-				//exponent++;
+			if (placeValue > Max()) {
+				limbs.Fill(GetDequeIdx(Max() + 1), GetDequeIdx(placeValue + 1), 0);
 			}
 			limbs.Set(GetDequeIdx(placeValue), value);
 		}
@@ -109,8 +108,6 @@ public:
 		} else if (LimbToStringNoZero == NULL) {
 			throw "No ToStringNoZero func provided.";
 		}
-
-		std::cout << limbs.ToString() << std::endl;
 
 		if (Max() < 0) {
 			retVal += "0 . ";

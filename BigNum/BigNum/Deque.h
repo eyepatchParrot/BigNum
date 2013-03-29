@@ -55,8 +55,8 @@ public:
 
 	void Fill(int min, int max, DequeType value)
 	{
-		if (max <= min) {
-			throw "Out of bounds. max <= min.";
+		if (max <= min || max < 0 || min > (int)sz_deque) {
+			throw "Out of bounds.";
 		}
 
 		int numNegElements = min * -1;
@@ -65,11 +65,12 @@ public:
 		numPosElements = numPosElements > 0 ? numPosElements : 0;
 		int numNewElements = numNegElements + numPosElements;
 		Grow(numNewElements);
+		ix_start = ix_start - numNegElements;
+		ix_start = ix_start < 0 ? ix_start + buffer.size() : ix_start;
+		min += numNegElements;
+		max += numNegElements;
 
-		max += (min < 0 ? min * -1 : 0);
-		min = 0;
-
-		for (int i = 0; i < max; i++) {
+		for (int i = min; i < max; i++) {
 			Set(i, value);
 		}
 	}
