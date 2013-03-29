@@ -6,15 +6,84 @@ using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 namespace TestBigNum
 {		
+	class NoExceptionException : public std::runtime_error {
+	public:
+		NoExceptionException(std::string expectedExceptionName, std::string executing) :
+			std::runtime_error(expectedExceptionName + " expected and not received. Executing " + executing + ".") { }
+	};
+
+	class NoExceptionDequeIndex : public NoExceptionException {
+	public:
+		NoExceptionDequeIndex(std::string executing) :
+			NoExceptionException("DequeIndexOutOfBounds", executing) { }
+	};
+
+	//class WrongExceptionException : public std::runtime_error {
+	//public:
+	//	WrongExceptionException(std::string expectedExceptionName, std::string executing) :
+	//		std::runtime_error(expectedExceptionName + " expected, but different one received. Executing " + executing + ".") { }
+	//};
+
 	TEST_CLASS(TestDeque)
 	{
 	public:
-		//TEST_METHOD(TestDequeFill)
-		//{
-		//	Deque<int> testDeque;
-		//	testDeque.Fill(4, 0, 7);
-		//	testDeque.Fill(-3, -2, 7);
-		//}
+		
+		TEST_METHOD(TestDequeFill)
+		{
+			Deque<int> testDeque;
+			try {
+				try {
+					testDeque.Fill(4, 0, 7);
+					throw NoExceptionDequeIndex("testDeque.Fill(4, 0, 7);");
+				} catch (DequeIndexOutOfBounds) { }
+
+				try {
+					testDeque.Fill(-3, -2, 7);
+					throw NoExceptionDequeIndex("testDeque.Fill(-3, -2, 7);");
+				} catch (DequeIndexOutOfBounds) { }
+
+				try {
+					testDeque.Fill(2, 5, 7);
+					throw NoExceptionDequeIndex("testDeque.Fill(-3, -2, 7);");
+				} catch (DequeIndexOutOfBounds) { }
+
+			} catch (NoExceptionException &e) {
+				std::string errorMsg(e.what());
+				std::wstring werrorMsg(errorMsg.begin(), errorMsg.end());
+				Assert::Fail(werrorMsg.c_str());
+			} catch (std::exception &e) {
+				Assert::Fail(L"Wrong exception.");
+			}
+
+			int sz_expected = 50;
+			testDeque.Fill(0, sz_expected, 1);
+			Assert::AreEqual((size_t)sz_expected, testDeque.Size(), L"Size wrong on Fill(0, 50, 1)");
+			for (int i = 0; i < (int)testDeque.Size(); i++) {
+				Assert::AreEqual(1, testDeque.Get(i));
+			}
+
+			sz_expected += 20;
+			testDeque.Fill(-20, 5, 2);
+			Assert::AreEqual((size_t)sz_expected, testDeque.Size(), L"Size wrong on Fill(-20, 5, 2)");
+			for (int i = 0; i < (int)testDeque.Size(); i++) {
+				if (i < 25) {
+					Assert::AreEqual(2, testDeque.Get(i));
+				} else {
+					Assert::AreNotEqual(2, testDeque.Get(i));
+				}
+			}
+
+			sz_expected += 20;
+			testDeque.Fill(testDeque.Size() - 5, testDeque.Size() + 20, 3);
+			Assert::AreEqual((size_t)sz_expected, testDeque.Size(), L"Size wrong on Fill(-20, 5, 2)");
+			for (int i = 0; i < (int)testDeque.Size(); i++) {
+				if (i >= testDeque.Size() - 25) {
+					Assert::AreEqual(3, testDeque.Get(i));
+				} else {
+					Assert::AreNotEqual(3, testDeque.Get(i));
+				}
+			}
+		}
 
 		TEST_METHOD(TestDequeGeneral)
 		{

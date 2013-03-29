@@ -42,7 +42,7 @@ class Deque
 
 			// Grow the buffer
 			std::vector<DequeType> newBuffer(newBufferSize);
-			for (size_t i = 0; i < buffer.size(); i++) {
+			for (size_t i = 0; i < sz_deque; i++) {
 				newBuffer[i] = Get(i);
 			}
 			buffer = newBuffer;
@@ -63,7 +63,7 @@ public:
 	void Fill(int min, int max, DequeType value)
 	{
 		if (max <= min || max < 0 || min > (int)sz_deque) {
-//			throw DequeIndexOutOfBounds();
+			throw DequeIndexOutOfBounds();
 		}
 
 		int numNegElements = min * -1;
