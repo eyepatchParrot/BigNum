@@ -27,7 +27,6 @@ namespace TestBigNum
 	TEST_CLASS(TestDeque)
 	{
 	public:
-		
 		TEST_METHOD(TestDequeFill)
 		{
 			Deque<int> testDeque;
@@ -55,6 +54,7 @@ namespace TestBigNum
 				Assert::Fail(L"Wrong exception.");
 			}
 
+			// Handles case of multi-size Fill
 			int sz_expected = 50;
 			testDeque.Fill(0, sz_expected, 1);
 			Assert::AreEqual((size_t)sz_expected, testDeque.Size(), L"Size wrong on Fill(0, 50, 1)");
