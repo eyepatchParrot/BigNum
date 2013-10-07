@@ -8,7 +8,7 @@ int _tmain(int argc, _TCHAR* argv[])
 {
 	using std::cout; using std::endl;
 
-	BigNumCpu<unsigned int> testInt(UIntToHexStringWithZero, UIntToHexStringNoZero);
+	BigNumCpu testInt;
 
 	testInt.Set(1, 0x40);
 	std::cout << testInt.ToString() << endl;

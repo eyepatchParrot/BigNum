@@ -2,7 +2,8 @@
 
 #include "stdafx.h"
 
-template <class Limb>
+typedef unsigned __int32 Limb;
+
 class BigNumCpu
 {
 	std::string (*LimbToStringWithZero)(Limb);
@@ -13,7 +14,8 @@ class BigNumCpu
 
 	bool IdxIsValid(int placeValue)
 	{
-		return placeValue >= exponent && GetDequeIdx(placeValue) < limbs.size();
+		int idx = GetDequeIdx(placeValue);
+		return idx >= 0 && (unsigned)idx < limbs.Size();
 	}
 
 	int GetDequeIdx(int placeValue)
@@ -22,12 +24,10 @@ class BigNumCpu
 	}
 
 public:
-	BigNumCpu(std::string (*LimbToStringWithZeroArg)(Limb), std::string (*LimbToStringNoZeroArg)(Limb))
+	BigNumCpu()
 	{
-		LimbToStringWithZero = LimbToStringWithZeroArg;
-		LimbToStringNoZero = LimbToStringNoZeroArg;
 		exponent = 0;
-		limbs = Deque<Limb>(LimbToStringWithZero);
+		limbs = Deque<Limb>(UIntToHexStringWithZero);
 	}
 
 	~BigNumCpu(void) { }
@@ -35,7 +35,7 @@ public:
 	Limb Get(int placeValue)
 	{
 		if (IdxIsValid(placeValue)) {
-			return limbs[GetDequeIdx(placeValue)];
+			return limbs.Get(GetDequeIdx(placeValue));
 		} else {
 			return 0;
 		}
@@ -103,10 +103,6 @@ public:
 	{
 		std::string retVal;
 
-		if (LimbToStringWithZero == NULL || LimbToStringNoZero == NULL) {
-			throw ToStringFuncExpected();
-		}
-
 		if (Max() < 0) {
 			retVal += "0 . ";
 		}
@@ -114,12 +110,12 @@ public:
 		// Fill out the string with zeros until we reach the max place value.
 		for (int i = 0; i < 0 - Max() - 1; i++) {
 			// loop from place value
-			retVal += LimbToStringWithZero(0);
+			retVal += UIntToHexStringWithZero(0);
 		}
 
 		// Fill out the string with zeros until we reach the min place value.
 		for (int i = 0; i < Min(); i++) {
-			retVal += LimbToStringWithZero(0);
+			retVal += UIntToHexStringWithZero(0);
 		}
 
 		// Loop over the digits highest to lowest
@@ -129,9 +125,9 @@ public:
 
 			Limb digitValue = limbs.Get(ix_digit);
 			if (placeValue >= 0 && placeValue == Max()) {
-				retVal += LimbToStringNoZero(digitValue);
+				retVal += UIntToHexStringNoZero(digitValue);
 			} else {
-				retVal += LimbToStringWithZero(digitValue);
+				retVal += UIntToHexStringWithZero(digitValue);
 			}
 			retVal += " ";
 
@@ -150,7 +146,7 @@ public:
 			limbs.PopFront();
 		}
 
-		while (limbs.Size() > 0 && limbs.Get(limbs.Size - 1) == 0) {
+		while (limbs.Size() > 0 && limbs.Get(limbs.Size() - 1) == 0) {
 			limbs.PopBack();
 		}
 	}
