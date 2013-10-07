@@ -6,8 +6,6 @@ typedef unsigned __int32 Limb;
 
 class BigNumCpu
 {
-	std::string (*LimbToStringWithZero)(Limb);
-	std::string (*LimbToStringNoZero)(Limb);
 	Deque<Limb> limbs;
 	// the placeValue of limbs[0]
 	int exponent;
