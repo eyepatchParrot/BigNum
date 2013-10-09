@@ -91,15 +91,13 @@ public:
 		}
 	}
 
-	bool Set(size_t ix_deque, DequeType val)
+	void Set(size_t ix_deque, DequeType val)
 	{
 		if (ix_deque >= sz_deque) {
-			return false;
-		} else {
-			buffer[GetBufferIdx(ix_deque)] = val;
-
-			return true;
+			throw std::out_of_range("ix_deque in Deque::Set out of range.");
 		}
+
+		buffer[GetBufferIdx(ix_deque)] = val;
 	}
 
 	DequeType PushBack(DequeType val)

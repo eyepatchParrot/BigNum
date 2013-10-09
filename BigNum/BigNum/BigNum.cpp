@@ -3,10 +3,14 @@
 
 #include "stdafx.h"
 #include "BigNumCpu.h"
+#include "BigInt.h"
 
 int _tmain(int argc, _TCHAR* argv[])
 {
 	using std::cout; using std::endl;
+
+	BigInt a;
+	a.Set(13, 0);
 
 	BigNumCpu testInt;
 

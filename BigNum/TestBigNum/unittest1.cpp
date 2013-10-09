@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "CppUnitTest.h"
 #include "Deque.h"
+#include "BigInt.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -76,7 +77,7 @@ namespace TestBigNum
 			sz_expected += 20;
 			testDeque.Fill(testDeque.Size() - 5, testDeque.Size() + 20, 3);
 			Assert::AreEqual((size_t)sz_expected, testDeque.Size(), L"Size wrong on Fill(-20, 5, 2)");
-			for (int i = 0; i < (int)testDeque.Size(); i++) {
+			for (unsigned i = 0; i < testDeque.Size(); i++) {
 				if (i >= testDeque.Size() - 25) {
 					Assert::AreEqual(3, testDeque.Get(i));
 				} else {
@@ -129,6 +130,14 @@ namespace TestBigNum
 				int offset = popFrontIterations - pushFrontIterations;
 				Assert::AreEqual(i + offset, testDeque.Get(i));
 			}
+		}
+
+		TEST_METHOD(TestBigIntSet)
+		{
+			BigInt a;
+			a.Set(13, 0);
+			Assert::AreEqual(13U, a.Get(0));
+			Assert::AreEqual(1U, a.Size());
 		}
 
 	};
