@@ -135,9 +135,50 @@ namespace TestBigNum
 		TEST_METHOD(TestBigIntSet)
 		{
 			BigInt a;
-			a.Set(13, 0);
-			Assert::AreEqual(13U, a.Get(0));
-			Assert::AreEqual(1U, a.Size());
+			a.Set(13, 1);
+			Assert::AreEqual(13U, a.Get(1));
+			Assert::AreEqual(2U, a.Size());
+
+			BigInt b;
+			b.Set(32U, 1);
+
+			// test normal add
+			BigInt c = a.Plus(b);
+			Assert::AreEqual(45U, c.Get(1));
+
+			// test carry add
+			b.Set(-1, 1);
+			c = a.Plus(b);
+			Assert::AreEqual(3U, c.Size());
+			Assert::AreEqual(1U, c.Get(2));
+			Assert::AreEqual(12U, c.Get(1));
+
+			// make sure that a, b, and c are uncoupled
+			a.Set(43, 0);
+			b.Set(22, 0);
+			c.Set(246, 0);
+			Assert::AreNotEqual(a.Get(0), b.Get(0));
+			Assert::AreNotEqual(a.Get(0), c.Get(0));
+			Assert::AreNotEqual(b.Get(0), c.Get(0));
+
+			a = BigInt();
+			b = BigInt();
+			
+			// test simple multiply
+			a.Set(17, 0);
+			b.Set(19, 0);
+			c = a.Times(b);
+			Assert::AreEqual(17U * 19U, c.Get(0));
+
+			// test multiply carry
+			a.Set(0xFFFFFFFF, 0);
+			b.Set(0xFFFFFFFF, 0);
+			c = a.Times(b);
+			Assert::AreEqual(2U, c.Size());
+			Assert::AreEqual(0xFFFFFFFEU, c.Get(1));
+			Assert::AreEqual(0x1U, c.Get(0));
+
+			Assert::AreEqual(std::string("FFFFFFFE 00000001"), c.String());
 		}
 
 	};

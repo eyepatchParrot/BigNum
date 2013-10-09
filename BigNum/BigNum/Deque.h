@@ -16,12 +16,12 @@ class Deque
 	size_t sz_deque;
 	size_t ix_start;
 
-	bool IdxIsValid(int ix_deque)
+	bool IdxIsValid(int ix_deque) const
 	{
 		return ix_deque >= 0 && ix_deque < (int)sz_deque;
 	}
 
-	int GetBufferIdx(int ix_deque)
+	int GetBufferIdx(int ix_deque) const
 	{
 		int ix_tmp = ix_deque + ix_start;
 		if (ix_tmp >= (int)buffer.size()) {
@@ -82,7 +82,7 @@ public:
 		}
 	}
 
-	DequeType Get(int ix_deque)
+	DequeType Get(int ix_deque) const
 	{
 		if (IdxIsValid(ix_deque)) {
 			return buffer[GetBufferIdx(ix_deque)];
@@ -152,7 +152,7 @@ public:
 		return sz_deque <= 0;
 	}
 
-	size_t Size()
+	size_t Size() const
 	{
 		return sz_deque;
 	}

@@ -10,7 +10,15 @@ int _tmain(int argc, _TCHAR* argv[])
 	using std::cout; using std::endl;
 
 	BigInt a;
-	a.Set(13, 0);
+	a.Set(0xFFFFFFFF, 0);
+
+	BigInt b;
+	b.Set(0xFFFFFFFF, 0);
+
+	BigInt c;
+	c = a.Times(b);
+
+	std::cout << c.String() << endl;
 
 	BigNumCpu testInt;
 
