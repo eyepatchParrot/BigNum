@@ -18,3 +18,4 @@
 *.opensdf
 *.pch
 Debug/
+Release/

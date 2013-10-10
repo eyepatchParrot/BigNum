@@ -174,11 +174,18 @@ namespace TestBigNum
 			a.Set(0xFFFFFFFF, 0);
 			b.Set(0xFFFFFFFF, 0);
 			c = a.Times(b);
+			c.Trim();
 			Assert::AreEqual(2U, c.Size());
 			Assert::AreEqual(0xFFFFFFFEU, c.Get(1));
 			Assert::AreEqual(0x1U, c.Get(0));
 
 			Assert::AreEqual(std::string("FFFFFFFE 00000001"), c.String());
+
+			a.Set(0xFFFFFFFF, 1);
+			b.Set(0xFFFFFFFF, 1);
+			c = a.Times(b);
+			c.Trim();
+			Assert::AreEqual(std::string("FFFFFFFF FFFFFFFE 00000000 00000001"), c.String());
 		}
 
 	};

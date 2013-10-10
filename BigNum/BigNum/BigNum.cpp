@@ -5,43 +5,61 @@
 #include "BigNumCpu.h"
 #include "BigInt.h"
 
+void setRandomBigInt(BigInt &n, size_t size)
+{
+	for (size_t i = 0; i < size; i++) {
+		n.Set(rand(), i);
+	}
+}
+
 int _tmain(int argc, _TCHAR* argv[])
 {
-	using std::cout; using std::endl;
+	using std::cout; using std::endl; using std::cin;
 
-	BigInt a;
+	BigInt a, b, c;
 	a.Set(0xFFFFFFFF, 0);
-
-	BigInt b;
 	b.Set(0xFFFFFFFF, 0);
-
-	BigInt c;
 	c = a.Times(b);
+	c.Trim();
 
-	std::cout << c.String() << endl;
+	cout << c.String() << endl;
 
-	BigNumCpu testInt;
+	srand(time(0));
 
-	testInt.Set(1, 0x40);
-	std::cout << testInt.ToString() << endl;
-	testInt.Set(0, 3);
-	std::cout << testInt.ToString() << endl;
-	testInt.Set(-1, 2);
+	double timeToTest = 0.5;
+	while (true) {
+		size_t bigIntSize = 100;
+		//cout << "How large should the integers be?";
+		//cin >> bigIntSize;
 
-	std::cout << testInt.ToString() << endl;
+		BigInt a, b, c;
+		int reps;
+		double repsPerSec, secs;
 
-	Deque<int> testDeque(IntToHexString);
-	testDeque.Fill(-1, 3, 5);
+		Stopwatch s;
+		for (reps = 0; s.Secs() < timeToTest; reps++) {
+			setRandomBigInt(a, bigIntSize);
+			setRandomBigInt(b, bigIntSize);
+			c = a.ScaledBy(b.Get(99)).LimbShiftLeft(50);
+		}
+		secs = s.Secs();
+		repsPerSec = (double)reps / secs;
+		cout << "scale reps : " << reps << " secs : " << secs << " reps / secs : " << repsPerSec << endl;
 
-	std::cout << testDeque.ToString() << endl;
+		s = Stopwatch();
+		for (reps = 0; s.Secs() < timeToTest; reps++) {
+			setRandomBigInt(a, bigIntSize);
+			setRandomBigInt(b, bigIntSize);
+			c = a.Plus(b);
+		}
+		secs = s.Secs();
+		repsPerSec = (double)reps / secs;
+		cout << "plus reps : " << reps << " secs : " << secs << " reps / secs : " << repsPerSec << endl;
+		timeToTest *= 2.0;
+	}
 
-	testDeque.Fill(-3, 0, 2);
-	std::cout << testDeque.ToString() << endl;
-
-	testDeque.Fill(testDeque.Size(), testDeque.Size() + 3, 7);
-	std::cout << testDeque.ToString() << endl;
-
-	std::cin.get();
+	cout << "We're done here." << endl;
+	//cin.get();
 
 	return 0;
 }

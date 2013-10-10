@@ -17,5 +17,8 @@
 #include <iostream>
 #include <string>
 #include <stdexcept>
+#include <Windows.h>
+#include <cstdlib>
+#include <ctime>
 #include "Deque.h"
 #include "utilities.h"
