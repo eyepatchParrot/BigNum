@@ -5,6 +5,11 @@
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
+namespace Microsoft{ namespace VisualStudio {namespace CppUnitTestFramework
+{
+	template<> static std::wstring ToString<BigInt> (const BigInt& t) { RETURN_WIDE_STRING(t.String().c_str()); }
+} } }
+
 namespace TestBigNum
 {		
 	class NoExceptionException : public std::runtime_error {
@@ -24,6 +29,8 @@ namespace TestBigNum
 	//	WrongExceptionException(std::string expectedExceptionName, std::string executing) :
 	//		std::runtime_error(expectedExceptionName + " expected, but different one received. Executing " + executing + ".") { }
 	//};
+	//template<> static std::wstring ToString<BigInt> (const BigInt* t) { RETURN_WIDE_STRING(t.String().c_str()); }
+	//template<> static std::wstring ToString<BigInt> (const BigInt* t) { RETURN_WIDE_STRING(t.String().c_str()); }
 
 	TEST_CLASS(TestDeque)
 	{
@@ -134,16 +141,15 @@ namespace TestBigNum
 
 		TEST_METHOD(TestBigIntSet)
 		{
-			BigInt a;
+			BigInt a, b, c, d;
 			a.Set(13, 1);
 			Assert::AreEqual(13U, a.Get(1));
 			Assert::AreEqual(2U, a.Size());
 
-			BigInt b;
 			b.Set(32U, 1);
 
 			// test normal add
-			BigInt c = a.Plus(b);
+			c = a.Plus(b);
 			Assert::AreEqual(45U, c.Get(1));
 
 			// test carry add
@@ -163,29 +169,37 @@ namespace TestBigNum
 
 			a = BigInt();
 			b = BigInt();
+
+			a.Set(17, 0);
+			c = a.ScaledBy(19);
+			Assert::AreEqual(17U * 19U, c.Get(0));
 			
 			// test simple multiply
 			a.Set(17, 0);
 			b.Set(19, 0);
 			c = a.Times(b);
+			d = a.TimesResult(b);
 			Assert::AreEqual(17U * 19U, c.Get(0));
+			Assert::AreEqual(c, d);
 
 			// test multiply carry
-			a.Set(0xFFFFFFFF, 0);
-			b.Set(0xFFFFFFFF, 0);
+			a.SetString("FFFFFFFF");
+			b.SetString("FFFFFFFF");
 			c = a.Times(b);
-			c.Trim();
+			d = a.TimesResult(b);
 			Assert::AreEqual(2U, c.Size());
 			Assert::AreEqual(0xFFFFFFFEU, c.Get(1));
 			Assert::AreEqual(0x1U, c.Get(0));
+			Assert::AreEqual(c, d);
 
 			Assert::AreEqual(std::string("FFFFFFFE 00000001"), c.String());
 
-			a.Set(0xFFFFFFFF, 1);
-			b.Set(0xFFFFFFFF, 1);
+			a.SetString("FFFFFFFF FFFFFFFF");
+			b.SetString("FFFFFFFF FFFFFFFF");
 			c = a.Times(b);
-			c.Trim();
+			d = a.TimesResult(b);
 			Assert::AreEqual(std::string("FFFFFFFF FFFFFFFE 00000000 00000001"), c.String());
+			Assert::AreEqual(c, d);
 		}
 
 	};

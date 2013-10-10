@@ -16,11 +16,12 @@ int _tmain(int argc, _TCHAR* argv[])
 {
 	using std::cout; using std::endl; using std::cin;
 
-	BigInt a, b, c;
-	a.Set(0xFFFFFFFF, 0);
-	b.Set(0xFFFFFFFF, 0);
+	BigInt a, b, c, d;
+
+	a.SetString("FFFFFFFF");
+	b.SetString("FFFFFFFF");
 	c = a.Times(b);
-	c.Trim();
+//	d = a.TimesResult(b);
 
 	cout << c.String() << endl;
 
@@ -33,28 +34,30 @@ int _tmain(int argc, _TCHAR* argv[])
 		//cin >> bigIntSize;
 
 		BigInt a, b, c;
+		a.SetString("FFFFFFFF");
+		b.SetString("FFFFFFFF");
+		c = a.Times(b);
+
 		int reps;
 		double repsPerSec, secs;
 
+		setRandomBigInt(a, bigIntSize);
+		setRandomBigInt(b, bigIntSize);
 		Stopwatch s;
 		for (reps = 0; s.Secs() < timeToTest; reps++) {
-			setRandomBigInt(a, bigIntSize);
-			setRandomBigInt(b, bigIntSize);
-			c = a.ScaledBy(b.Get(99)).LimbShiftLeft(50);
+			c = a.TimesResult(b);
 		}
 		secs = s.Secs();
 		repsPerSec = (double)reps / secs;
-		cout << "scale reps : " << reps << " secs : " << secs << " reps / secs : " << repsPerSec << endl;
+		cout << "times : " << reps << "\tsecs : " << secs << "\treps / secs : " << repsPerSec << endl;
 
-		s = Stopwatch();
-		for (reps = 0; s.Secs() < timeToTest; reps++) {
-			setRandomBigInt(a, bigIntSize);
-			setRandomBigInt(b, bigIntSize);
-			c = a.Plus(b);
-		}
-		secs = s.Secs();
-		repsPerSec = (double)reps / secs;
-		cout << "plus reps : " << reps << " secs : " << secs << " reps / secs : " << repsPerSec << endl;
+		//s = Stopwatch();
+		//for (reps = 0; s.Secs() < timeToTest; reps++) {
+		//	c = a.TimesResult(b);
+		//}
+		//secs = s.Secs();
+		//repsPerSec = (double)reps / secs;
+		//cout << "timesR : " << reps << "\tsecs : " << secs << "\treps / secs : " << repsPerSec << endl;
 		timeToTest *= 2.0;
 	}
 

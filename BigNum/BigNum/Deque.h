@@ -91,6 +91,13 @@ public:
 		}
 	}
 
+	void GrowTo(size_t newSize)
+	{
+		if (newSize > this->Size()) {
+			this->Fill(this->Size(), newSize, 0);
+		}
+	}
+
 	void Set(size_t ix_deque, DequeType val)
 	{
 		if (ix_deque >= sz_deque) {
@@ -150,6 +157,11 @@ public:
 	bool IsEmpty()
 	{
 		return sz_deque <= 0;
+	}
+
+	void Clear()
+	{
+		sz_deque = 0;
 	}
 
 	size_t Size() const
