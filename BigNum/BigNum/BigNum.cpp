@@ -5,47 +5,59 @@
 #include "BigNumCpu.h"
 #include "BigInt.h"
 
-void setRandomBigInt(BigInt &n, size_t size)
-{
-	for (size_t i = 0; i < size; i++) {
-		n.Set(rand(), i);
-	}
-}
-
 int _tmain(int argc, _TCHAR* argv[])
 {
 	using std::cout; using std::endl; using std::cin;
 
 	BigInt a, b, c, d;
 
-	a.SetString("FFFFFFFF");
-	b.SetString("FFFFFFFF");
-	c = a.Times(b);
-//	d = a.TimesResult(b);
+	//a.FillValue(4, 0xffffffff);
+	//b.FillValue(3, 0xffffffff);
+	//c = a.Times(b);
+	//d = a.Toom2(b);
 
-	cout << c.String() << endl;
+	//cout << (c==d) << " c : " << c.String() << endl << "d : " << d.String() << endl;
+
+	//for (int x = 1; x < 7; x++) {
+	//	for (int y = 1; y < 7; y++) {
+	//		a.FillValue(x, 0xFFFFFFFF);
+	//		b.FillValue(y, 0xFFFFFFFF);
+	//		c = a.Times(b);
+	//		d = a.Toom2(b);
+
+	//		if (!(c==d)) {
+	//			cout << "x: " << x << " y: " << y << endl << "c : " << c.String() << endl << "d : " << d.String() << endl;
+	//		}
+	//	}
+	//}
 
 	srand(time(0));
 
 	double timeToTest = 0.5;
+	//int minToomSize = 2;
 	while (true) {
-		size_t bigIntSize = 100;
+		const size_t bigIntSize = 100;
 		//cout << "How large should the integers be?";
 		//cin >> bigIntSize;
 
-		BigInt a, b, c;
-		a.SetString("FFFFFFFF");
-		b.SetString("FFFFFFFF");
-		c = a.Times(b);
+		BigInt a, b, c, d;
 
 		int reps;
 		double repsPerSec, secs;
+		a.FillRandom(bigIntSize);
+		b.FillRandom(bigIntSize);
 
-		setRandomBigInt(a, bigIntSize);
-		setRandomBigInt(b, bigIntSize);
 		Stopwatch s;
 		for (reps = 0; s.Secs() < timeToTest; reps++) {
+			if (reps % 100 == 0) {
+				a.FillRandom(bigIntSize);
+				b.FillRandom(bigIntSize);
+			}
+			//a.minToomSize = minToomSize;
+			//b.minToomSize = minToomSize;
+
 			c = a.TimesResult(b);
+			//c = a.Toom2(b);
 		}
 		secs = s.Secs();
 		repsPerSec = (double)reps / secs;

@@ -141,7 +141,7 @@ namespace TestBigNum
 
 		TEST_METHOD(TestBigIntSet)
 		{
-			BigInt a, b, c, d;
+			BigInt a, b, c, d, e;
 			a.Set(13, 1);
 			Assert::AreEqual(13U, a.Get(1));
 			Assert::AreEqual(2U, a.Size());
@@ -179,18 +179,22 @@ namespace TestBigNum
 			b.Set(19, 0);
 			c = a.Times(b);
 			d = a.TimesResult(b);
+			e = a.Toom2(b);
 			Assert::AreEqual(17U * 19U, c.Get(0));
 			Assert::AreEqual(c, d);
+			Assert::AreEqual(c, e);
 
 			// test multiply carry
 			a.SetString("FFFFFFFF");
 			b.SetString("FFFFFFFF");
 			c = a.Times(b);
 			d = a.TimesResult(b);
+			e = a.Toom2(b);
 			Assert::AreEqual(2U, c.Size());
 			Assert::AreEqual(0xFFFFFFFEU, c.Get(1));
 			Assert::AreEqual(0x1U, c.Get(0));
 			Assert::AreEqual(c, d);
+			Assert::AreEqual(c, e);
 
 			Assert::AreEqual(std::string("FFFFFFFE 00000001"), c.String());
 
@@ -198,8 +202,53 @@ namespace TestBigNum
 			b.SetString("FFFFFFFF FFFFFFFF");
 			c = a.Times(b);
 			d = a.TimesResult(b);
+			e = a.Toom2(b);
 			Assert::AreEqual(std::string("FFFFFFFF FFFFFFFE 00000000 00000001"), c.String());
 			Assert::AreEqual(c, d);
+			Assert::AreEqual(c, e);
+
+			a = BigInt();
+			b = BigInt();
+			c = a.Times(b);
+			d = a.TimesResult(b);
+			e = a.Toom2(b);
+
+			// write > tests
+			// a_s > b_s
+			a.SetString("FFFFFFFF FFFFFFFF");
+			b.SetString("FFFFFFFF");
+			Assert::IsTrue(a > b);
+
+			// a_s < b_s
+			a.SetString("FFFFFFFF");
+			b.SetString("FFFFFFFF FFFFFFFF");
+			Assert::IsFalse(a > b);
+
+			// a_s == b_s && a < b
+			a.SetString("FFFFFFF1");
+			b.SetString("FFFFFFFF");
+			Assert::IsFalse(a > b);
+
+			// a_s == b_s && a > b
+			a.SetString("FFFFFFFF");
+			b.SetString("FFFFFFF1");
+			Assert::IsTrue(a > b);
+
+			// a == b
+			b.SetString("FFFFFFFF");
+			Assert::IsFalse(a > b);
+
+			// write toom tests
+			for (int x = 1; x < 10; x++) {
+				for (int y = 1; y < 10; y++) {
+					a.FillValue(x, 0xFFFFFFFF);
+					b.FillValue(y, 0xFFFFFFFF);
+					c = a.Times(b);
+					d = a.TimesResult(b);
+					
+					Assert::AreEqual(c, d);
+				}
+			}
 		}
 
 	};
