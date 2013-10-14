@@ -9,7 +9,7 @@ int _tmain(int argc, _TCHAR* argv[])
 {
 	using std::cout; using std::endl; using std::cin;
 
-	BigInt a, b, c, d;
+	//BigInt a, b, c, d;
 
 	//a.FillValue(4, 0xffffffff);
 	//b.FillValue(3, 0xffffffff);
@@ -49,7 +49,7 @@ int _tmain(int argc, _TCHAR* argv[])
 
 		Stopwatch s;
 		for (reps = 0; s.Secs() < timeToTest; reps++) {
-			if (reps % 100 == 0) {
+			if (reps % 10 == 0) {
 				a.FillRandom(bigIntSize);
 				b.FillRandom(bigIntSize);
 			}
@@ -58,6 +58,7 @@ int _tmain(int argc, _TCHAR* argv[])
 
 			c = a.TimesResult(b);
 			//c = a.Toom2(b);
+			//c = a.Plus(b);
 		}
 		secs = s.Secs();
 		repsPerSec = (double)reps / secs;

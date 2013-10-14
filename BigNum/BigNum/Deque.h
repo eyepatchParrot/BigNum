@@ -24,10 +24,11 @@ class Deque
 	int GetBufferIdx(int ix_deque) const
 	{
 		int ix_tmp = ix_deque + ix_start;
-		if (ix_tmp >= (int)buffer.size()) {
-			ix_tmp = ix_tmp - buffer.size();
+		size_t bufferSize = this->buffer.size();
+		if (ix_tmp >= (int)bufferSize) {
+			ix_tmp = ix_tmp - bufferSize;
 		} else if (ix_tmp < 0) {
-			ix_tmp = ix_tmp + buffer.size();
+			ix_tmp = ix_tmp + bufferSize;
 		}
 		return ix_tmp;
 	}
@@ -62,9 +63,11 @@ public:
 
 	void Fill(int min, int max, DequeType value)
 	{
+#ifdef _DEBUG
 		if (max <= min || max < 0 || min > (int)sz_deque) {
 			throw DequeIndexOutOfBounds();
 		}
+#endif
 
 		int numNegElements = min * -1;
 		numNegElements = numNegElements > 0 ? numNegElements : 0;
@@ -84,10 +87,14 @@ public:
 
 	DequeType Get(int ix_deque) const
 	{
-		if (IdxIsValid(ix_deque)) {
-			return buffer[GetBufferIdx(ix_deque)];
-		} else {
+#ifdef _DEBUG
+		if (!IdxIsValid(ix_deque)) {
 			throw DequeIndexOutOfBounds();
+		} else
+#endif
+		{
+			size_t idx = GetBufferIdx(ix_deque);
+			return buffer[idx];
 		}
 	}
 

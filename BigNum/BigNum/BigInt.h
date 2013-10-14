@@ -187,7 +187,7 @@ public:
 		}
 	}
 
-	BigInt Plus(BigInt b) const
+	BigInt Plus(const BigInt b) const
 	{
 		BigInt r = *this;
 		BigInt carry;
@@ -220,7 +220,7 @@ public:
 	}
 
 
-	BigInt Minus(BigInt b) const
+	BigInt Minus(const BigInt b) const
 	{
 		if (b > *this) {
 			throw std::invalid_argument("BigInt::Minus only works if a >= b");
@@ -235,7 +235,7 @@ public:
 		return r;
 	}
 
-	BigInt Times(BigInt b) const
+	BigInt Times(const BigInt b) const
 	{
 		BigInt r;
 		for (unsigned bIdx = 0; bIdx < b.limbs.Size(); bIdx++) {
@@ -246,7 +246,7 @@ public:
 		return r;
 	}
 
-	BigInt TimesResult(BigInt b) const
+	BigInt TimesResult(const BigInt b) const
 	{
 		BigInt r;
 		// multiply by 0
@@ -260,17 +260,17 @@ public:
 		for (size_t rIdx = 0; rIdx < resultSize; rIdx++) {
 			DoubleLimb tmp = carry & ~(Limb)0;
 			carry >>= (sizeof(Limb) * 8);
-			for (size_t aIdx = 0; aIdx < this->limbs.Size(); aIdx++) {
+			int aIdx = rIdx - b.limbs.Size() + 1;
+			aIdx = aIdx < 0 ? 0 : aIdx;
+			for (; aIdx < this->limbs.Size() && rIdx >= aIdx; aIdx++) {
 				int bIdx = (int)rIdx - aIdx;
-				if (bIdx >= 0 && bIdx < b.limbs.Size()) { // if is a valid idx
-					Limb aLimb = this->Get(aIdx);
-					DoubleLimb aDblLimb = aLimb;
-					DoubleLimb bLimb = b.Get(bIdx);
-					DoubleLimb mulLimb = aDblLimb * bLimb;
-					tmp += mulLimb;
-					carry += tmp >> (sizeof(Limb) * 8);
-					tmp &= ~(Limb)0;
-				}
+				Limb aLimb = this->Get(aIdx);
+				DoubleLimb aDblLimb = aLimb;
+				DoubleLimb bLimb = b.Get(bIdx);
+				DoubleLimb mulLimb = aDblLimb * bLimb;
+				tmp += mulLimb;
+				carry += tmp >> (sizeof(Limb) * 8);
+				tmp &= ~(Limb)0;
 			}
 			r.Set((Limb)tmp, rIdx);
 		}
@@ -287,7 +287,7 @@ public:
 	}
 
 	// B = 2^32
-	BigInt Toom2(BigInt b) const
+	BigInt Toom2(const BigInt b) const
 	{
 		size_t a_s = this->Size();
 		size_t b_s = b.Size();
