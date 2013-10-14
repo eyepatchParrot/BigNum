@@ -70,7 +70,7 @@ public:
 	BigInt(void)
 	{
 		this->limbs = vector<Limb>();
-		minToomSize = 32*3 * 4;
+		minToomSize = 768;
 	}
 
 	~BigInt(void) {
@@ -111,6 +111,36 @@ public:
 			}
 		}
 		return this->Get(0) > b.Get(0);
+	}
+
+	BigInt& operator+=(const BigInt &b) {
+		this->Add(b);
+		return *this;
+	}
+
+	BigInt& operator-=(const BigInt &b) {
+		this->Subtract(b);
+		return *this;
+	}
+
+	BigInt operator+(const BigInt &b) const {
+		return BigInt(*this) += b;
+	}
+
+	BigInt operator-(const BigInt &b) const {
+		return BigInt(*this) -= b;
+	}
+
+	BigInt operator*(const BigInt &b) const {
+		return this->Toom2(b);
+	}
+
+	BigInt operator<<(const size_t n) const {
+		return this->LimbShiftLeft(n);
+	}
+
+	BigInt operator<<=(const size_t n) const {
+		return BigInt(*this).LimbShiftLeft(n);
 	}
 
 	void GrowTo(unsigned e)
@@ -271,7 +301,6 @@ public:
 		BigInt r;
 		for (unsigned bIdx = 0; bIdx < b.limbs.size(); bIdx++) {
 			BigInt tmp = this->ScaledBy(b.Get(bIdx)).LimbShiftLeft(bIdx);
-			std::cout << "=" << std::endl << r.String() << std::endl << "+" << std::endl << tmp.String() << std::endl;
 			r = r.Plus(tmp);
 		}
 
@@ -343,10 +372,7 @@ public:
 			BigInt a_0 = this->splitLow(m);
 			BigInt a_1 = this->splitHigh(m, a_s);
 			a_0.minToomSize = a_1.minToomSize = this->minToomSize;
-			BigInt r_0 = a_0.Toom2(b);
-			BigInt r_1 = a_1.Toom2(b).LimbShiftLeft(m);
-			r_1.minToomSize = this->minToomSize;
-			BigInt r = r_1.Plus(r_0);
+			BigInt r = (a_1.Toom2(b) << m) + a_0.Toom2(b);
 			return r;
 		}
 
@@ -372,13 +398,12 @@ public:
 		BigInt r_0 = a_0.Toom2(b_0);
 		BigInt r_2 = a_1.Toom2(b_1);
 		BigInt r_1 = (a_1.Plus(a_0)).Toom2(b_1.Plus(b_0));
-		r_1.Subtract(r_2);
-		r_1.Subtract(r_0);
-		r_1 = r_1.LimbShiftLeft(m);
-		r_2 = r_2.LimbShiftLeft(m * 2);
-		r_2.Add(r_1);
-		r_2.Add(r_0);
-		//BigInt r = r_2.Plus(r_1).Plus(r_0);
+		r_1 -= r_2;
+		r_1 -= r_0;
+		r_1 <<= m;
+		r_2 <<= 2*m;
+		r_2 += r_1;
+		r_2 += r_0;
 		return r_2;
 	}
 

@@ -33,8 +33,8 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	srand(time(0));
 
-	double timeToTest = 2.0;
-	int minToomSize = 99;
+	double timeToTest = 0.5;
+	int minToomSize = 768;
 	while (true) {
 		const size_t bigIntSize = 400;
 		//cout << "How large should the integers be?";
@@ -55,8 +55,8 @@ int _tmain(int argc, _TCHAR* argv[])
 				a.FillRandom(bigIntSize);
 				b.FillRandom(bigIntSize);
 			}
-			a.minToomSize = minToomSize;
-			b.minToomSize = minToomSize;
+			//a.minToomSize = minToomSize;
+			//b.minToomSize = minToomSize;
 
 			//c = a.TimesResult(b);
 			//c = a.Toom2(b);
@@ -67,7 +67,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		}
 		secs = s.Secs();
 		repsPerSec = (double)reps / secs;
-		cout << " times : " << reps << "\tsecs : " << secs << "\treps / secs : " << repsPerSec << endl;
+		cout << "toomSize : " << minToomSize << "\ttimes : " << reps << "\tsecs : " << secs << "\treps / secs : " << repsPerSec << endl;
 
 		//s = Stopwatch();
 		//for (reps = 0; s.Secs() < timeToTest; reps++) {
