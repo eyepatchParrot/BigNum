@@ -3,9 +3,11 @@
 typedef unsigned __int32 Limb;
 typedef unsigned __int64 DoubleLimb;
 
+using std::vector;
+
 class BigInt
 {
-	Deque<Limb> limbs;
+	vector<Limb> limbs;
 
 	int getCarry(Limb a, Limb b) const
 	{
@@ -38,7 +40,7 @@ class BigInt
 
 	size_t toom2M() const
 	{
-		return (this->limbs.Size() + 1) / 2; // divide by 2 and round up
+		return (this->limbs.size() + 1) / 2; // divide by 2 and round up
 	}
 
 	BigInt splitLow(size_t m) const
@@ -67,7 +69,7 @@ public:
 
 	BigInt(void)
 	{
-		this->limbs = Deque<Limb>(UIntToHexStringWithZero);
+		this->limbs = vector<Limb>();
 		minToomSize = 64;
 	}
 
@@ -112,18 +114,20 @@ public:
 
 	void GrowTo(unsigned e)
 	{
-		this->limbs.GrowTo(e + 1);
+		if (e + 1 > this->limbs.size()) {
+			this->limbs.resize(e + 1, 0);
+		}
 	}
 
 	void Set(Limb l, unsigned e)
 	{
 		this->GrowTo(e);
-		this->limbs.Set(e, l);
+		this->limbs[e] = l;
 	}
 
 	void SetString(const std::string s)
 	{
-		this->limbs.Clear();
+		this->limbs.clear();
 		size_t numSize = (s.size() + 1) / 9;
 		if ((s.size() + 1) % 9 != 0) {
 			throw std::invalid_argument("string must be in form 'FFFFFFFF FFFFFFFF'");
@@ -137,7 +141,7 @@ public:
 
 	void FillValue(size_t size, Limb value)
 	{
-		this->limbs.Clear();
+		this->limbs.clear();
 		for (size_t i = 0; i < size; i++) {
 			this->Set(value, i);
 		}
@@ -146,7 +150,7 @@ public:
 	void FillRandom(const size_t size)
 	{
 		// std::cout << size << " ";
-		this->limbs.Clear();
+		this->limbs.clear();
 		for (size_t i = 0; i < size; i++) {
 			this->Set(rand(), i);
 		}
@@ -154,16 +158,18 @@ public:
 
 	Limb Get(unsigned e) const
 	{
-		if (e >= this->limbs.Size()) {
+#ifdef _DEBUG
+		if (e >= this->limbs.size()) {
 			throw std::out_of_range("e is out of range.");
 		}
+#endif
 
-		return this->limbs.Get(e);
+		return this->limbs[e];
 	}
 
 	size_t Size() const
 	{
-		size_t realSize = this->limbs.Size();
+		size_t realSize = this->limbs.size();
 		for (; realSize > 0 && this->Get(realSize - 1) == 0; realSize--) {
 		}
 		return realSize;
@@ -182,7 +188,7 @@ public:
 
 	void FinalAdd(BigInt b)
 	{
-		for (size_t i = 0; i < b.limbs.Size(); i++) {
+		for (size_t i = 0; i < b.limbs.size(); i++) {
 			this->AddLimb(b.Get(i), i);
 		}
 	}
@@ -191,8 +197,8 @@ public:
 	{
 		BigInt r = *this;
 		BigInt carry;
-		r.GrowTo(b.limbs.Size() - 1);
-		for (unsigned i = 0; i < b.limbs.Size(); i++) {
+		r.GrowTo(b.limbs.size() - 1);
+		for (unsigned i = 0; i < b.limbs.size(); i++) {
 			carry.AddLimb(this->getCarry(r.Get(i), b.Get(i)), i + 1);
 			r.Set(r.Get(i) + b.Get(i), i);
 		}
@@ -203,12 +209,12 @@ public:
 
 	void SubtractLimb(Limb b, unsigned e)
 	{
-		if (e >= this->limbs.Size()) {
+		if (e >= this->limbs.size()) {
 			throw std::invalid_argument("b must < a");
 		}
 
 		Limb aLimb = this->Get(e);
-		if (aLimb < b && e == this->limbs.Size() - 1) {
+		if (aLimb < b && e == this->limbs.size() - 1) {
 			throw std::invalid_argument("b must < a");
 		}
 
@@ -238,7 +244,7 @@ public:
 	BigInt Times(const BigInt b) const
 	{
 		BigInt r;
-		for (unsigned bIdx = 0; bIdx < b.limbs.Size(); bIdx++) {
+		for (unsigned bIdx = 0; bIdx < b.limbs.size(); bIdx++) {
 			BigInt tmp = this->ScaledBy(b.Get(bIdx)).LimbShiftLeft(bIdx);
 			r = r.Plus(tmp);
 		}
@@ -250,19 +256,19 @@ public:
 	{
 		BigInt r;
 		// multiply by 0
-		if (this->limbs.Size() == 0 || b.limbs.Size() == 0) {
+		if (this->limbs.size() == 0 || b.limbs.size() == 0) {
 			return r;
 		}
 
-		size_t resultSize = this->limbs.Size() + b.limbs.Size() - 2 + 1;
+		size_t resultSize = this->limbs.size() + b.limbs.size() - 2 + 1;
 		r.GrowTo(resultSize - 1);
 		DoubleLimb carry = 0; // may overflow if maxVal(Limb) additions are performed
 		for (size_t rIdx = 0; rIdx < resultSize; rIdx++) {
 			DoubleLimb tmp = carry & ~(Limb)0;
 			carry >>= (sizeof(Limb) * 8);
-			int aIdx = rIdx - b.limbs.Size() + 1;
+			int aIdx = rIdx - b.limbs.size() + 1;
 			aIdx = aIdx < 0 ? 0 : aIdx;
-			for (; aIdx < this->limbs.Size() && rIdx >= aIdx; aIdx++) {
+			for (; aIdx < this->limbs.size() && rIdx >= aIdx; aIdx++) {
 				int bIdx = (int)rIdx - aIdx;
 				Limb aLimb = this->Get(aIdx);
 				DoubleLimb aDblLimb = aLimb;
@@ -350,15 +356,15 @@ public:
 	BigInt ScaledBy(Limb b) const
 	{
 		BigInt r;
-		r.GrowTo(this->limbs.Size() - 1);
+		r.GrowTo(this->limbs.size() - 1);
 		Limb carry = 0;
-		for (size_t i = 0; i < this->limbs.Size(); i++) {
+		for (size_t i = 0; i < this->limbs.size(); i++) {
 			DoubleLimb tmp = (DoubleLimb)this->Get(i) * b + carry;
 			Limb lowLimb = tmp & ~0;
 			carry = tmp >> (sizeof(Limb) * 8);
 			r.Set(lowLimb, i);
 		}
-		r.Set(carry, r.limbs.Size());
+		r.Set(carry, r.limbs.size());
 
 		return r;
 	}
@@ -366,8 +372,8 @@ public:
 	BigInt LimbShiftLeft(unsigned v) const
 	{
 		BigInt r;
-		r.GrowTo(v + this->limbs.Size() - 1);
-		for (size_t i = 0; i < this->limbs.Size(); i++) {
+		r.GrowTo(v + this->limbs.size() - 1);
+		for (size_t i = 0; i < this->limbs.size(); i++) {
 			r.Set(this->Get(i), i + v);
 		}
 		return r;
@@ -375,8 +381,8 @@ public:
 
 	void Trim()
 	{
-		while (this->limbs.Size() > this->Size()) {
-			this->limbs.PopBack();
+		while (this->limbs.size() > this->Size()) {
+			this->limbs.pop_back();
 		}
 	}
 
