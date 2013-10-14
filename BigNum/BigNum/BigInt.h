@@ -65,15 +65,16 @@ class BigInt
 	}
 
 public:
-	int minToomSize;
+	size_t minToomSize;
 
 	BigInt(void)
 	{
 		this->limbs = vector<Limb>();
-		minToomSize = 64;
+		minToomSize = 32*3 * 4;
 	}
 
-	~BigInt(void) { }
+	~BigInt(void) {
+	}
 
 	bool operator==(const BigInt &b) const {
 		if (this->Size() != b.Size()) {
@@ -186,37 +187,44 @@ public:
 		}
 	}
 
-	void FinalAdd(BigInt b)
+	void Add(const BigInt &b)
 	{
+		this->GrowTo(b.limbs.size() - 1);
+		Limb carry = 0;
 		for (size_t i = 0; i < b.limbs.size(); i++) {
-			this->AddLimb(b.Get(i), i);
+			Limb aLimb = this->Get(i);
+			Limb bLimb = b.Get(i);
+			DoubleLimb rLimb = (DoubleLimb)aLimb + bLimb + carry;
+			this->Set(rLimb & ~(Limb)0, i);
+			carry = rLimb >> (sizeof(Limb) * 8);
 		}
+		this->AddLimb(carry, b.limbs.size());
 	}
 
 	BigInt Plus(const BigInt b) const
 	{
 		BigInt r = *this;
-		BigInt carry;
-		r.GrowTo(b.limbs.size() - 1);
-		for (unsigned i = 0; i < b.limbs.size(); i++) {
-			carry.AddLimb(this->getCarry(r.Get(i), b.Get(i)), i + 1);
-			r.Set(r.Get(i) + b.Get(i), i);
-		}
-		r.FinalAdd(carry);
+		
+		r.Add(b);
 
 		return r;
 	}
 
 	void SubtractLimb(Limb b, unsigned e)
 	{
+#ifdef _DEBUG
 		if (e >= this->limbs.size()) {
 			throw std::invalid_argument("b must < a");
 		}
+#endif
 
 		Limb aLimb = this->Get(e);
+
+#ifdef _DEBUG
 		if (aLimb < b && e == this->limbs.size() - 1) {
 			throw std::invalid_argument("b must < a");
 		}
+#endif
 
 		int borrow = this->getBorrow(aLimb, b);
 		this->Set(aLimb - b, e);
@@ -225,18 +233,35 @@ public:
 		}
 	}
 
-
-	BigInt Minus(const BigInt b) const
+	void Subtract(const BigInt &b)
 	{
+#ifdef _DEBUG
 		if (b > *this) {
 			throw std::invalid_argument("BigInt::Minus only works if a >= b");
 		}
+#endif
 
-		BigInt r = *this;
 		int borrow = 0;
 		for (size_t i = 0; i < b.Size(); i++) {
-			r.SubtractLimb(b.Get(i), i);
+			Limb aLimb = this->Get(i);
+			Limb bLimb = b.Get(i);
+			this->Set(aLimb - bLimb - borrow, i);
+			if (bLimb + borrow == 0 || this->getBorrow(aLimb, bLimb + borrow) == 1) {
+				borrow = 1;
+			} else {
+				borrow = 0;
+			}
 		}
+		if (borrow != 0) {
+			this->SubtractLimb(borrow, b.Size());
+		}
+	}
+
+
+	BigInt Minus(const BigInt &b) const
+	{
+		BigInt r = *this;
+		r.Subtract(b);
 
 		return r;
 	}
@@ -246,6 +271,7 @@ public:
 		BigInt r;
 		for (unsigned bIdx = 0; bIdx < b.limbs.size(); bIdx++) {
 			BigInt tmp = this->ScaledBy(b.Get(bIdx)).LimbShiftLeft(bIdx);
+			std::cout << "=" << std::endl << r.String() << std::endl << "+" << std::endl << tmp.String() << std::endl;
 			r = r.Plus(tmp);
 		}
 
@@ -316,8 +342,10 @@ public:
 			size_t m = this->toom2M();
 			BigInt a_0 = this->splitLow(m);
 			BigInt a_1 = this->splitHigh(m, a_s);
+			a_0.minToomSize = a_1.minToomSize = this->minToomSize;
 			BigInt r_0 = a_0.Toom2(b);
 			BigInt r_1 = a_1.Toom2(b).LimbShiftLeft(m);
+			r_1.minToomSize = this->minToomSize;
 			BigInt r = r_1.Plus(r_0);
 			return r;
 		}
@@ -340,17 +368,18 @@ public:
 		BigInt a_1 = this->splitHigh(m, a_s);
 		BigInt b_0 = b.splitLow(m);
 		BigInt b_1 = b.splitHigh(m, b_s);
+		a_0.minToomSize = a_1.minToomSize = this->minToomSize;
 		BigInt r_0 = a_0.Toom2(b_0);
 		BigInt r_2 = a_1.Toom2(b_1);
-		BigInt r_1_0 = a_1.Plus(a_0);
-		BigInt r_1_1 = b_1.Plus(b_0);
-		BigInt r_1 = (r_1_0).Toom2(r_1_1);
-		r_1 = r_1.Minus(r_2);
-		r_1 = r_1.Minus(r_0);
+		BigInt r_1 = (a_1.Plus(a_0)).Toom2(b_1.Plus(b_0));
+		r_1.Subtract(r_2);
+		r_1.Subtract(r_0);
 		r_1 = r_1.LimbShiftLeft(m);
 		r_2 = r_2.LimbShiftLeft(m * 2);
-		BigInt r = r_2.Plus(r_1).Plus(r_0);
-		return r;
+		r_2.Add(r_1);
+		r_2.Add(r_0);
+		//BigInt r = r_2.Plus(r_1).Plus(r_0);
+		return r_2;
 	}
 
 	BigInt ScaledBy(Limb b) const
@@ -376,6 +405,7 @@ public:
 		for (size_t i = 0; i < this->limbs.size(); i++) {
 			r.Set(this->Get(i), i + v);
 		}
+
 		return r;
 	}
 

@@ -139,16 +139,12 @@ namespace TestBigNum
 			}
 		}
 
-		TEST_METHOD(TestBigIntSet)
+		TEST_METHOD(TestBigIntAdd)
 		{
-			BigInt a, b, c, d, e;
-			a.Set(13, 1);
-			Assert::AreEqual(13U, a.Get(1));
-			Assert::AreEqual(2U, a.Size());
-
-			b.Set(32U, 1);
-
+			BigInt a, b, c;
 			// test normal add
+			a.Set(13U, 1);
+			b.Set(32U, 1);
 			c = a.Plus(b);
 			Assert::AreEqual(45U, c.Get(1));
 
@@ -167,9 +163,25 @@ namespace TestBigNum
 			Assert::AreNotEqual(a.Get(0), c.Get(0));
 			Assert::AreNotEqual(b.Get(0), c.Get(0));
 
-			a = BigInt();
-			b = BigInt();
+			a.FillValue(2, 0xFFFFFFFF);
+			b.FillValue(2, 0xFFFFFFFF);
+			c = a.Plus(b);
+			Assert::AreEqual(3U, c.Size());
+			Assert::AreEqual(0xFFFFFFFEU, c.Get(0));
+			Assert::AreEqual(0x1U, c.Get(2));
+		}
 
+		TEST_METHOD(TestBigIntSet)
+		{
+			BigInt a;
+			a.Set(13, 1);
+			Assert::AreEqual(13U, a.Get(1));
+			Assert::AreEqual(2U, a.Size());
+		}
+
+		TEST_METHOD(TestBigIntMultiply)
+		{
+			BigInt a, b, c, d, e;
 			a.Set(17, 0);
 			c = a.ScaledBy(19);
 			Assert::AreEqual(17U * 19U, c.Get(0));

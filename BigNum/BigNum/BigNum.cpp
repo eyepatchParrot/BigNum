@@ -11,8 +11,8 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	//BigInt a, b, c, d;
 
-	//a.FillValue(4, 0xffffffff);
-	//b.FillValue(3, 0xffffffff);
+	//a.FillValue(2, 0xffffffff);
+	//b.FillValue(2, 0xffffffff);
 	//c = a.Times(b);
 	//d = a.Toom2(b);
 
@@ -33,10 +33,10 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	srand(time(0));
 
-	double timeToTest = 0.5;
-	//int minToomSize = 2;
+	double timeToTest = 2.0;
+	int minToomSize = 99;
 	while (true) {
-		const size_t bigIntSize = 100;
+		const size_t bigIntSize = 400;
 		//cout << "How large should the integers be?";
 		//cin >> bigIntSize;
 
@@ -48,30 +48,47 @@ int _tmain(int argc, _TCHAR* argv[])
 		b.FillRandom(bigIntSize);
 
 		Stopwatch s;
+
+		s = Stopwatch();
 		for (reps = 0; s.Secs() < timeToTest; reps++) {
-			if (reps % 10 == 0) {
+			if (reps % 1 == 0) {
 				a.FillRandom(bigIntSize);
 				b.FillRandom(bigIntSize);
 			}
-			//a.minToomSize = minToomSize;
-			//b.minToomSize = minToomSize;
+			a.minToomSize = minToomSize;
+			b.minToomSize = minToomSize;
 
-			c = a.TimesResult(b);
+			//c = a.TimesResult(b);
 			//c = a.Toom2(b);
 			//c = a.Plus(b);
+			//c = a;
+			//c.ShiftLeftLimbs(50);
+			c = a.Toom2(b);
 		}
 		secs = s.Secs();
 		repsPerSec = (double)reps / secs;
-		cout << "times : " << reps << "\tsecs : " << secs << "\treps / secs : " << repsPerSec << endl;
+		cout << " times : " << reps << "\tsecs : " << secs << "\treps / secs : " << repsPerSec << endl;
 
 		//s = Stopwatch();
 		//for (reps = 0; s.Secs() < timeToTest; reps++) {
-		//	c = a.TimesResult(b);
+		//	if (reps % 100 == 0) {
+		//		a.FillRandom(bigIntSize);
+		//		b.FillRandom(bigIntSize);
+		//	}
+		//	//a.minToomSize = minToomSize;
+		//	//b.minToomSize = minToomSize;
+
+		//	//c = a.TimesResult(b);
+		//	//c = a.Toom2(b);
+		//	//c = a.Plus(b);
+		//	c = a.LimbShiftLeft(50);
 		//}
 		//secs = s.Secs();
 		//repsPerSec = (double)reps / secs;
-		//cout << "timesR : " << reps << "\tsecs : " << secs << "\treps / secs : " << repsPerSec << endl;
+		//cout << "toom2 : " << reps << "\tsecs : " << secs << "\treps / secs : " << repsPerSec << endl;
+
 		timeToTest *= 2.0;
+		//minToomSize *= 0.9;
 	}
 
 	cout << "We're done here." << endl;
