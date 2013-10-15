@@ -47,7 +47,7 @@ class BigInt
 	{
 		BigInt r;
 		r.GrowTo(m - 1);
-		for (int i = 0; i < m; i++) {
+		for (size_t i = 0; i < m; i++) {
 			r.Set(this->Get(i), i);
 		}
 		return r;
@@ -165,7 +165,7 @@ public:
 		if ((s.size() + 1) % 9 != 0) {
 			throw std::invalid_argument("string must be in form 'FFFFFFFF FFFFFFFF'");
 		}
-		for (int i = 0; i < numSize; i++) {
+		for (size_t i = 0; i < numSize; i++) {
 			std::string limbText = s.substr(i * 9, 8);
 			Limb curLimb = std::stoul(limbText, 0, 16);
 			this->Set(curLimb, numSize - i - 1);
@@ -308,7 +308,7 @@ public:
 			Limb aLimb = this->Get(i);
 			Limb bLimb = b.Get(i);
 			DoubleLimb rLimb = (DoubleLimb)aLimb - bLimb - borrow;
-			this->Set(rLimb, i);
+			this->Set((Limb)rLimb, i);
 			borrow = rLimb >> (limbWidth * 2 - 1);
 
 		}
@@ -332,7 +332,7 @@ public:
 			Limb aLimb = this->Get(i);
 			Limb bLimb = b.Get(i);
 			DoubleLimb rLimb = (DoubleLimb)aLimb - bLimb - borrow;
-			this->Set(rLimb, i);
+			this->Set((Limb)rLimb, i);
 			borrow = rLimb >> (limbWidth * 2 - 1);
 
 		}
@@ -375,9 +375,9 @@ public:
 		for (size_t rIdx = 0; rIdx < resultSize; rIdx++) {
 			DoubleLimb tmp = carry & ~(Limb)0;
 			carry >>= (sizeof(Limb) * 8);
-			int aIdx = rIdx - b.limbs.size() + 1;
-			aIdx = aIdx < 0 ? 0 : aIdx;
-			for (; aIdx < this->limbs.size() && rIdx >= aIdx; aIdx++) {
+			int startIdx = rIdx - b.limbs.size() + 1;
+			startIdx = startIdx < 0 ? 0 : startIdx;
+			for (size_t aIdx = startIdx; aIdx < this->limbs.size() && rIdx >= aIdx; aIdx++) {
 				int bIdx = (int)rIdx - aIdx;
 				Limb aLimb = this->Get(aIdx);
 				DoubleLimb aDblLimb = aLimb;

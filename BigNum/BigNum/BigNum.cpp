@@ -85,8 +85,8 @@ int _tmain(int argc, _TCHAR* argv[])
 
 		cout << endl;
 
-		//timeToTest *= 2.0;
-		minToomSize *= 0.9;
+		timeToTest *= 2.0;
+		//minToomSize *= 0.9;
 	}
 
 	cout << "We're done here." << endl;
