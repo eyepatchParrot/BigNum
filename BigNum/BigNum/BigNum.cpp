@@ -31,12 +31,10 @@ int _tmain(int argc, _TCHAR* argv[])
 	//	}
 	//}
 
-	srand(time(0));
-
-	double timeToTest = 0.5;
-	int minToomSize = 768;
+	double timeToTest = 1.0;
+	int minToomSize = 512;
 	while (true) {
-		const size_t bigIntSize = 400;
+		const size_t bigIntSize = 768 * 5;
 		//cout << "How large should the integers be?";
 		//cin >> bigIntSize;
 
@@ -49,46 +47,46 @@ int _tmain(int argc, _TCHAR* argv[])
 
 		Stopwatch s;
 
+		srand(5);
 		s = Stopwatch();
 		for (reps = 0; s.Secs() < timeToTest; reps++) {
-			if (reps % 1 == 0) {
+			if (reps % 100 == 0) {
 				a.FillRandom(bigIntSize);
 				b.FillRandom(bigIntSize);
 			}
-			//a.minToomSize = minToomSize;
-			//b.minToomSize = minToomSize;
+			a.minToomSize = b.minToomSize = minToomSize;
 
-			//c = a.TimesResult(b);
-			//c = a.Toom2(b);
-			//c = a.Plus(b);
-			//c = a;
-			//c.ShiftLeftLimbs(50);
 			c = a.Toom2(b);
+			//c = a;
+			//c.Add(a);
 		}
 		secs = s.Secs();
 		repsPerSec = (double)reps / secs;
 		cout << "toomSize : " << minToomSize << "\ttimes : " << reps << "\tsecs : " << secs << "\treps / secs : " << repsPerSec << endl;
 
-		//s = Stopwatch();
-		//for (reps = 0; s.Secs() < timeToTest; reps++) {
-		//	if (reps % 100 == 0) {
-		//		a.FillRandom(bigIntSize);
-		//		b.FillRandom(bigIntSize);
-		//	}
-		//	//a.minToomSize = minToomSize;
-		//	//b.minToomSize = minToomSize;
+//#define COMPARE
+#ifdef COMPARE
+		srand(5);
+		s = Stopwatch();
+		for (reps = 0; s.Secs() < timeToTest; reps++) {
+			if (reps % 100 == 0) {
+				a.FillRandom(bigIntSize);
+				b.FillRandom(bigIntSize);
+			}
+			a.minToomSize = b.minToomSize = minToomSize;
 
-		//	//c = a.TimesResult(b);
-		//	//c = a.Toom2(b);
-		//	//c = a.Plus(b);
-		//	c = a.LimbShiftLeft(50);
-		//}
-		//secs = s.Secs();
-		//repsPerSec = (double)reps / secs;
-		//cout << "toom2 : " << reps << "\tsecs : " << secs << "\treps / secs : " << repsPerSec << endl;
+			c = a;
+			c.Add2(b);
+		}
+		secs = s.Secs();
+		repsPerSec = (double)reps / secs;
+		cout << "toomSize : " << minToomSize << "\ttoom2 : " << reps << "\tsecs : " << secs << "\treps / secs : " << repsPerSec << endl;
+#endif
 
-		timeToTest *= 2.0;
-		//minToomSize *= 0.9;
+		cout << endl;
+
+		//timeToTest *= 2.0;
+		minToomSize *= 0.9;
 	}
 
 	cout << "We're done here." << endl;

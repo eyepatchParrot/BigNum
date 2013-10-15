@@ -70,7 +70,7 @@ public:
 	BigInt(void)
 	{
 		this->limbs = vector<Limb>();
-		minToomSize = 768;
+		minToomSize = 0x180;
 	}
 
 	~BigInt(void) {
@@ -103,14 +103,16 @@ public:
 			return false;
 		}
 
-		for (size_t i = 0; i + 1 < a_s; i++) {
+		for (size_t i = 0; i < a_s; i++) {
 			Limb a_i = this->Get(a_s - i - 1);
 			Limb b_i = b.Get(b_s - i - 1);
 			if (a_i < b_i) {
 				return false;
+			} else if (a_i > b_i) {
+				return true;
 			}
 		}
-		return this->Get(0) > b.Get(0);
+		return false;
 	}
 
 	BigInt& operator+=(const BigInt &b) {
@@ -221,14 +223,42 @@ public:
 	{
 		this->GrowTo(b.limbs.size() - 1);
 		Limb carry = 0;
-		for (size_t i = 0; i < b.limbs.size(); i++) {
-			Limb aLimb = this->Get(i);
+		const Limb mask = ~0;
+		const int limbWidth = sizeof(Limb) * 8;
+		const size_t b_s = b.limbs.size();
+		for (size_t i = 0; i < b_s; i++) {
+			DoubleLimb aLimb = this->Get(i);
 			Limb bLimb = b.Get(i);
-			DoubleLimb rLimb = (DoubleLimb)aLimb + bLimb + carry;
-			this->Set(rLimb & ~(Limb)0, i);
-			carry = rLimb >> (sizeof(Limb) * 8);
+			DoubleLimb rLimb = aLimb + bLimb + carry;
+			this->Set(rLimb & mask, i);
+			carry = rLimb >> limbWidth;
 		}
-		this->AddLimb(carry, b.limbs.size());
+		this->AddLimb(carry, b_s);
+	}
+
+	void Add2(const BigInt &b)
+	{
+		this->GrowTo(b.limbs.size() - 1);
+		Limb carry = 0;
+		const Limb mask = ~0;
+		const int limbWidth = sizeof(Limb) * 8;
+		const size_t b_s = b.limbs.size();
+		for (size_t i = 0; i * 2 < b_s; i++) {
+			DoubleLimb aLimb = this->Get(i * 2) | ((DoubleLimb)this->Get(i * 2 + 1) << limbWidth);
+			DoubleLimb bLimb = b.Get(i * 2) | ((DoubleLimb)b.Get(i * 2 + 1) << limbWidth);
+			DoubleLimb rLimb = aLimb + bLimb + carry;
+			this->Set(rLimb & mask, i);
+			this->Set(rLimb >> limbWidth, i + 1);
+			carry = (aLimb != 0 || carry != 0) && rLimb <= bLimb;
+		}
+		if (b_s % 2 == 1) {
+			Limb aLimb = this->Get(b_s - 1);
+			Limb bLimb = b.Get(b_s - 1);
+			Limb rLimb = aLimb + bLimb + carry;
+			this->Set(rLimb, b_s - 1);
+			carry = (aLimb != 0 || carry != 0) && rLimb <= bLimb;
+		}
+		this->AddLimb(carry, b_s);
 	}
 
 	BigInt Plus(const BigInt b) const
@@ -272,17 +302,41 @@ public:
 #endif
 
 		int borrow = 0;
-		for (size_t i = 0; i < b.Size(); i++) {
+		const size_t limbWidth = sizeof(Limb) * 8;
+		size_t b_s = b.Size();
+		for (size_t i = 0; i < b_s; i++) {
 			Limb aLimb = this->Get(i);
 			Limb bLimb = b.Get(i);
-			this->Set(aLimb - bLimb - borrow, i);
-			if (bLimb + borrow == 0 || this->getBorrow(aLimb, bLimb + borrow) == 1) {
-				borrow = 1;
-			} else {
-				borrow = 0;
-			}
+			DoubleLimb rLimb = (DoubleLimb)aLimb - bLimb - borrow;
+			this->Set(rLimb, i);
+			borrow = rLimb >> (limbWidth * 2 - 1);
+
 		}
-		if (borrow != 0) {
+		if (borrow > 0) {
+			this->SubtractLimb(borrow, b.Size());
+		}
+	}
+
+	void Subtract2(const BigInt &b)
+	{
+#ifdef _DEBUG
+		if (b > *this) {
+			throw std::invalid_argument("BigInt::Minus only works if a >= b");
+		}
+#endif
+
+		int borrow = 0;
+		const size_t limbWidth = sizeof(Limb) * 8;
+		size_t b_s = b.Size();
+		for (size_t i = 0; i < b_s; i++) {
+			Limb aLimb = this->Get(i);
+			Limb bLimb = b.Get(i);
+			DoubleLimb rLimb = (DoubleLimb)aLimb - bLimb - borrow;
+			this->Set(rLimb, i);
+			borrow = rLimb >> (limbWidth * 2 - 1);
+
+		}
+		if (borrow > 0) {
 			this->SubtractLimb(borrow, b.Size());
 		}
 	}
@@ -397,7 +451,9 @@ public:
 		a_0.minToomSize = a_1.minToomSize = this->minToomSize;
 		BigInt r_0 = a_0.Toom2(b_0);
 		BigInt r_2 = a_1.Toom2(b_1);
-		BigInt r_1 = (a_1.Plus(a_0)).Toom2(b_1.Plus(b_0));
+		BigInt r_1_0 = a_1 + a_0;
+		r_1_0.minToomSize = this->minToomSize;
+		BigInt r_1 = r_1_0.Toom2(b_1 + b_0);
 		r_1 -= r_2;
 		r_1 -= r_0;
 		r_1 <<= m;
