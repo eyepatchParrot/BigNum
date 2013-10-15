@@ -363,12 +363,12 @@ public:
 
 	BigInt TimesResult(const BigInt b) const
 	{
-		BigInt r;
 		// multiply by 0
 		if (this->limbs.size() == 0 || b.limbs.size() == 0) {
-			return r;
+			return BigInt();
 		}
 
+		BigInt r;
 		size_t resultSize = this->limbs.size() + b.limbs.size() - 2 + 1;
 		r.GrowTo(resultSize - 1);
 		DoubleLimb carry = 0; // may overflow if maxVal(Limb) additions are performed
@@ -407,10 +407,6 @@ public:
 		size_t a_s = this->Size();
 		size_t b_s = b.Size();
 
-		if (a_s == 0 || b_s == 0) {
-			return BigInt();
-		}
-
 		if (!isBigEnoughForToom(a_s, b_s)) {
 			return this->TimesResult(b);
 		}
@@ -426,7 +422,7 @@ public:
 			BigInt a_0 = this->splitLow(m);
 			BigInt a_1 = this->splitHigh(m, a_s);
 			a_0.minToomSize = a_1.minToomSize = this->minToomSize;
-			BigInt r = (a_1.Toom2(b) << m) + a_0.Toom2(b);
+			BigInt r = ((a_1 * b) << m) + a_0 * b;
 			return r;
 		}
 
@@ -449,11 +445,11 @@ public:
 		BigInt b_0 = b.splitLow(m);
 		BigInt b_1 = b.splitHigh(m, b_s);
 		a_0.minToomSize = a_1.minToomSize = this->minToomSize;
-		BigInt r_0 = a_0.Toom2(b_0);
-		BigInt r_2 = a_1.Toom2(b_1);
+		BigInt r_0 = a_0 * b_0;
+		BigInt r_2 = a_1 * b_1;
 		BigInt r_1_0 = a_1 + a_0;
 		r_1_0.minToomSize = this->minToomSize;
-		BigInt r_1 = r_1_0.Toom2(b_1 + b_0);
+		BigInt r_1 = r_1_0 * (b_1 + b_0);
 		r_1 -= r_2;
 		r_1 -= r_0;
 		r_1 <<= m;
@@ -462,6 +458,30 @@ public:
 		r_2 += r_0;
 		return r_2;
 	}
+
+	//BigInt Toom3(const BigInt b) const
+	//{
+	//	size_t a_s = this->Size();
+	//	size_t b_s = b.Size();
+
+	//	if (!isBigEnoughForToom3(a_s, b_s)) {
+	//		return this->Toom2(b);
+	//	}
+
+	//	if (this->isLopsided(b_s, a_s)) {
+	//		return b.Toom3(*this);
+	//	} else if (this->isLopsided(a_s, b_s)) {
+	//		// lopsided a
+	//		// a = a_1B^m + a_0
+	//		// b = b
+	//		// r = b(a_1)(B^m) + b(a_0)
+	//		size_t m = this->toom2M();
+	//		BigInt a_0 = this->splitLow(m);
+	//		BigInt a_1 = this->splitHigh(m, a_s);
+	//		a_0.minToomSize = a_1.minToomSize = this->minToomSize;
+	//		BigInt r = (a_1.Toom3(b) << m) + a_0.Toom3(b);
+	//		return r;
+	//}
 
 	BigInt ScaledBy(Limb b) const
 	{

@@ -32,9 +32,9 @@ int _tmain(int argc, _TCHAR* argv[])
 	//}
 
 	double timeToTest = 1.0;
-	int minToomSize = 512;
+	int minToomSize = 0x180;
 	while (true) {
-		const size_t bigIntSize = 768 * 5;
+		const size_t bigIntSize = 768 * 1;
 		//cout << "How large should the integers be?";
 		//cin >> bigIntSize;
 
