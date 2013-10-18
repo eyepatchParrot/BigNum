@@ -45,3 +45,7 @@ std::string IntToHexString(int val)
 	
 	return retVal;
 }
+
+unsigned ceilDivide(unsigned a, unsigned b) {
+	return (a + b - 1) / b;
+}

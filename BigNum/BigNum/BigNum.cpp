@@ -5,31 +5,33 @@
 #include "BigNumCpu.h"
 #include "BigInt.h"
 
+#define COMPARE
+
 int _tmain(int argc, _TCHAR* argv[])
 {
 	using std::cout; using std::endl; using std::cin;
 
-	//BigInt a, b, c, d;
+	BigInt a, b, c, d;
 
-	//a.FillValue(2, 0xffffffff);
-	//b.FillValue(2, 0xffffffff);
-	//c = a.Times(b);
-	//d = a.Toom2(b);
+	a.FillValue(3, 0xffffffff);
+	b.FillValue(4, 0xffffffff);
+	c = a.Times(b);
+	d = a.Toom3(b);
 
-	//cout << (c==d) << " c : " << c.String() << endl << "d : " << d.String() << endl;
+	cout << (c==d) << " c : " << c.String() << endl << "d : " << d.String() << endl;
 
-	//for (int x = 1; x < 7; x++) {
-	//	for (int y = 1; y < 7; y++) {
-	//		a.FillValue(x, 0xFFFFFFFF);
-	//		b.FillValue(y, 0xFFFFFFFF);
-	//		c = a.Times(b);
-	//		d = a.Toom2(b);
+	for (int x = 1; x < 7; x++) {
+		for (int y = 1; y < 7; y++) {
+			a.FillValue(x, 0xFFFFFFFF);
+			b.FillValue(y, 0xFFFFFFFF);
+			c = a.Times(b);
+			d = a.Toom3(b);
 
-	//		if (!(c==d)) {
-	//			cout << "x: " << x << " y: " << y << endl << "c : " << c.String() << endl << "d : " << d.String() << endl;
-	//		}
-	//	}
-	//}
+			if (!(c==d)) {
+				cout << "x: " << x << " y: " << y << endl << "c : " << c.String() << endl << "d : " << d.String() << endl;
+			}
+		}
+	}
 
 	double timeToTest = 1.0;
 	int minToomSize = 0x180;
@@ -64,7 +66,6 @@ int _tmain(int argc, _TCHAR* argv[])
 		repsPerSec = (double)reps / secs;
 		cout << "toomSize : " << minToomSize << "\ttimes : " << reps << "\tsecs : " << secs << "\treps / secs : " << repsPerSec << endl;
 
-//#define COMPARE
 #ifdef COMPARE
 		srand(5);
 		s = Stopwatch();
@@ -75,8 +76,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			}
 			a.minToomSize = b.minToomSize = minToomSize;
 
-			c = a;
-			c.Add2(b);
+			c = a.Toom3(b);
 		}
 		secs = s.Secs();
 		repsPerSec = (double)reps / secs;

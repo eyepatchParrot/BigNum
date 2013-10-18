@@ -32,45 +32,47 @@ class BigInt
 		return a_s > minToomSize || b_s > minToomSize;
 	}
 
+	bool isBigEnoughForToom3(size_t a_s, size_t b_s) const
+	{
+		return a_s > minToom3Size || b_s > minToom3Size;
+	}
+
 	bool isLopsided(size_t a_s, size_t b_s) const
 	{
 		const double minLopsided = 1.4; // no higher than 2
 		return (double)a_s / b_s > minLopsided;
 	}
 
-	size_t toom2M() const
+	size_t toomM(size_t a_s, size_t b_s, size_t k) const
 	{
-		return (this->limbs.size() + 1) / 2; // divide by 2 and round up
+		return ceilDivide(max(a_s, b_s), k);
 	}
 
-	BigInt splitLow(size_t m) const
+	BigInt split(size_t min, size_t max) const
 	{
-		BigInt r;
-		r.GrowTo(m - 1);
-		for (size_t i = 0; i < m; i++) {
-			r.Set(this->Get(i), i);
+		if (max <= min) {
+			return BigInt();
 		}
-		return r;
-	}
 
-	BigInt splitHigh(size_t m, size_t sz) const
-	{
 		BigInt r;
-		size_t r_s = sz - m;
+		size_t r_s = max - min;
+		size_t a_s = this->limbs.size();
 		r.GrowTo(r_s - 1);
-		for (size_t i = 0; i < r_s; i++) {
-			r.Set(this->Get(i + m), i);
+		for (size_t i = 0; i + min < max && i + min < a_s; i++) {
+			r.Set(this->Get(i + min), i);
 		}
 		return r;
 	}
 
 public:
 	size_t minToomSize;
+	size_t minToom3Size;
 
 	BigInt(void)
 	{
 		this->limbs = vector<Limb>();
 		minToomSize = 0x180;
+		minToom3Size = 3;
 	}
 
 	~BigInt(void) {
@@ -135,6 +137,31 @@ public:
 
 	BigInt operator*(const BigInt &b) const {
 		return this->Toom2(b);
+	}
+
+	BigInt operator*(const Limb b) const {
+		return this->ScaledBy(b);
+	}
+
+	BigInt operator/(const Limb b) const {
+		switch(b) {
+		case 2:
+			return this->BitShiftLeft(1);
+			break;
+
+		case 3:
+			return this->DividedBy3();
+			break;
+
+		case 6:
+			return (this->DividedBy3()).BitShiftLeft(1);
+			break;
+
+#ifdef _DEBUG
+		default:
+			throw std::invalid_argument("division not by 2, 3, or 6");
+#endif
+		}
 	}
 
 	BigInt operator<<(const size_t n) const {
@@ -401,6 +428,27 @@ public:
 		return r;
 	}
 
+	BigInt TimesLopsided(const BigInt b) const
+	{
+		size_t a_s = this->Size();
+		size_t b_s = b.Size();
+
+		if (this->isLopsided(b_s, a_s)) {
+			return b.TimesLopsided(*this);
+		}
+
+		// lopsided a
+		// a = a_1B^m + a_0
+		// b = b
+		// r = b(a_1)(B^m) + b(a_0)
+		size_t m = this->toomM(a_s, b_s, 2);
+		BigInt a_0 = this->split(0, m);
+		BigInt a_1 = this->split(m, a_s);
+		a_0.minToomSize = a_1.minToomSize = this->minToomSize;
+		BigInt r = ((a_1 * b) << m) + a_0 * b;
+		return r;
+	}
+
 	// B = 2^32
 	BigInt Toom2(const BigInt b) const
 	{
@@ -411,19 +459,8 @@ public:
 			return this->TimesResult(b);
 		}
 
-		if (this->isLopsided(b_s, a_s)) {
-			return b.Toom2(*this);
-		} else if (this->isLopsided(a_s, b_s)) {
-			// lopsided a
-			// a = a_1B^m + a_0
-			// b = b
-			// r = b(a_1)(B^m) + b(a_0)
-			size_t m = this->toom2M();
-			BigInt a_0 = this->splitLow(m);
-			BigInt a_1 = this->splitHigh(m, a_s);
-			a_0.minToomSize = a_1.minToomSize = this->minToomSize;
-			BigInt r = ((a_1 * b) << m) + a_0 * b;
-			return r;
+		if (this->isLopsided(b_s, a_s) || this->isLopsided(a_s, b_s)) {
+			return this->TimesLopsided(b);
 		}
 
 		// even enough
@@ -433,17 +470,12 @@ public:
 		// r_0 = a_0(b_0)
 		// r_1 = (a_1 + a_0)(b_1 + b_0) - r_2 - r_0
 		// r_2 = a_1(b_1)
-		size_t m;
-		if (a_s > b_s) {
-			m = this->toom2M();
-		} else {
-			m = b.toom2M();
-		}
+		size_t m = this->toomM(a_s, b_s, 2);
 
-		BigInt a_0 = this->splitLow(m);
-		BigInt a_1 = this->splitHigh(m, a_s);
-		BigInt b_0 = b.splitLow(m);
-		BigInt b_1 = b.splitHigh(m, b_s);
+		BigInt a_0 = this->split(0, m);
+		BigInt a_1 = this->split(m, a_s);
+		BigInt b_0 = b.split(0, m);
+		BigInt b_1 = b.split(m, b_s);
 		a_0.minToomSize = a_1.minToomSize = this->minToomSize;
 		BigInt r_0 = a_0 * b_0;
 		BigInt r_2 = a_1 * b_1;
@@ -459,29 +491,115 @@ public:
 		return r_2;
 	}
 
-	//BigInt Toom3(const BigInt b) const
-	//{
-	//	size_t a_s = this->Size();
-	//	size_t b_s = b.Size();
+	BigInt Toom3(const BigInt b) const
+	{
+		size_t a_s = this->Size();
+		size_t b_s = b.Size();
 
-	//	if (!isBigEnoughForToom3(a_s, b_s)) {
-	//		return this->Toom2(b);
-	//	}
+		if (!isBigEnoughForToom3(a_s, b_s)) {
+			return this->Toom2(b);
+		}
 
-	//	if (this->isLopsided(b_s, a_s)) {
-	//		return b.Toom3(*this);
-	//	} else if (this->isLopsided(a_s, b_s)) {
-	//		// lopsided a
-	//		// a = a_1B^m + a_0
-	//		// b = b
-	//		// r = b(a_1)(B^m) + b(a_0)
-	//		size_t m = this->toom2M();
-	//		BigInt a_0 = this->splitLow(m);
-	//		BigInt a_1 = this->splitHigh(m, a_s);
-	//		a_0.minToomSize = a_1.minToomSize = this->minToomSize;
-	//		BigInt r = (a_1.Toom3(b) << m) + a_0.Toom3(b);
-	//		return r;
-	//}
+		if (this->isLopsided(b_s, a_s) || this->isLopsided(a_s, b_s)) {
+			return this->TimesLopsided(b);
+		}
+
+		///////////
+		// split //
+		///////////
+		
+		// even enough
+		// p(x) = a_2(x^2) + a_1(x) + a_0
+		// q(x) = b_2(x^2) + b_1(x) + b_0
+		// A = p(m)
+		// B = q(m)
+		// m = ceil(max(a_s, b_s) / 3)
+
+		size_t m = this->toomM(a_s, b_s, 3);
+		BigInt a_0 = this->split(0, m);
+		BigInt a_1 = this->split(m, 2*m);
+		BigInt a_2 = this->split(2*m, a_s);
+		BigInt b_0 = b.split(0, m);
+		BigInt b_1 = b.split(m, 2*m);
+		BigInt b_2 = b.split(2*m, b_s);
+
+		//////////////
+		// Evaluate //
+		//////////////
+
+		// p(0) = a_0
+		// p(1) = a_0 + a_1 + a_2
+		// p(-1) = a_0 - a_1 + a_2
+		// p(2) = a_0 + 2a_1 + 4a_2
+		// p(inf) = a_2
+
+		BigInt p_0 = a_0;
+		BigInt p_1 = a_0 + a_1 + a_2;
+		BigInt p_2 = a_0 + a_1 * 2 + a_2 * 4;
+		BigInt p_inf = a_2;
+		BigInt p_n1 = a_0 + a_2;
+		bool p_n1_isNeg = false;
+		if (a_1 > p_n1) {
+			p_n1 = a_1 - p_n1;
+			p_n1_isNeg = true;
+		} else {
+			p_n1 = p_n1 - a_1;
+		}
+
+		BigInt q_0 = b_0;
+		BigInt q_1 = b_0 + b_1 + b_2;
+		BigInt q_2 = b_0 + b_1 * 2 + b_2 * 4;
+		BigInt q_inf = b_2;
+		BigInt q_n1 = b_0 + b_2;
+		bool q_n1_isNeg = false;
+		if (b_1 > q_n1) {
+			q_n1 = b_1 - q_n1;
+			q_n1_isNeg = true;
+		} else {
+			q_n1 = q_n1 - b_1;
+		}
+
+		////////////////////////
+		// pointwise multiply //
+		////////////////////////
+
+		// r(x) = p(x)q(x)
+		bool r_n1_isNeg = p_n1_isNeg ^ q_n1_isNeg;
+		BigInt r_0 = p_0 * q_0;
+		BigInt r_1 = p_1 * q_1;
+		BigInt r_n1 = p_n1 * q_n1;
+		BigInt r_2 = p_2 * q_2;
+		BigInt r_inf = p_inf * q_inf;
+
+		/////////////////
+		// interpolate //
+		/////////////////
+
+		// c_0 = r(0)
+		// c_4 = r(inf)
+		// c_1 = r(0)/2 + r(1)/3 - r(-1) + r(-2)/6 - 2r(inf)
+		// c_2 = -r(0) + r(1)/2 + r(-1)/2 - r(inf)
+		// c_3 = -r(0)/2 + r(1)/6 + r(-1)/2 - r(-2)/6 + 2r(inf)
+		// c = c_4(m^4) + c_3(m^3) + c_2(m^2) + c_1(m) + r_0
+
+		BigInt c_0 = r_0;
+		BigInt c_4 = r_inf;
+		BigInt c_1 = r_0 / 2 + r_1 / 3 + r_n2 / 6 - r_inf * 2; // - r_n1
+		BigInt c_2 = BigInt() - r_0 + r_1 / 2 - r_inf; // + r_n1 / 2
+		BigInt c_3 = BigInt() - r_0 / 2 + r_1 / 6 - r_n2 / 6 + r_inf * 2; // + r_n1 / 2
+		if (r_n1_isNeg) {
+			c_1 += r_n1;
+			c_2 -= r_n1 / 2;
+			c_3 -= r_n1 / 2;
+		} else {
+			c_1 -= r_n1;
+			c_2 += r_n1 / 2;
+			c_3 += r_n1 / 2;
+		}
+
+		BigInt c = c_0 + (c_1 << m) + (c_2 << (2 * m)) + (c_3 << (3 * m)) + (c_4 << (4 * m));
+		return c;
+	}
 
 	BigInt ScaledBy(Limb b) const
 	{
@@ -499,14 +617,60 @@ public:
 		return r;
 	}
 
+	BigInt DividedBy3() const
+	{
+		const Limb modInverse3 = 0xAAAAAAAB;
+		const Limb thirdMax = 0x55555556;
+		const Limb twoThirdsMax = 0xAAAAAAAB;
+
+		BigInt r;
+		Limb borrow = 0;
+		for (size_t i = 0; i < this->limbs.size(); i++) {
+			Limb rLimb = this->Get(i) - borrow;
+			borrow = this->getBorrow(this->Get(i), borrow);
+			rLimb = rLimb * modInverse3;
+			r.Set(rLimb, i);
+
+			borrow += (rLimb >= thirdMax);
+			borrow += (rLimb >= twoThirdsMax);
+		}
+		return r;
+	}
+
 	BigInt LimbShiftLeft(unsigned v) const
 	{
+		if (v == 0) {
+			return *this;
+		}
+
 		BigInt r;
 		r.GrowTo(v + this->limbs.size() - 1);
 		for (size_t i = 0; i < this->limbs.size(); i++) {
 			r.Set(this->Get(i), i + v);
 		}
 
+		return r;
+	}
+
+	BigInt BitShiftLeft(unsigned n) const
+	{
+		BigInt r;
+		const size_t limbWidth = 8 * sizeof(Limb);
+		//const Limb mask = ~0;
+		const size_t numBits = n % limbWidth;
+		if (numBits > 0) {
+			r.GrowTo(this->limbs.size());
+			Limb carry = 0;
+			for (size_t i = 0; i < this->limbs.size(); i++) {
+				Limb newLimb = (this->Get(i) << numBits) | carry;
+				carry = this->Get(i) >> (limbWidth - numBits);
+				r.Set(newLimb, i);
+			}
+			r.Set(carry, this->limbs.size());
+			r = r.LimbShiftLeft(n / 8);
+		} else {
+			r = this->LimbShiftLeft(n / 8);
+		}
 		return r;
 	}
 
