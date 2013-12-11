@@ -575,27 +575,35 @@ public:
 		// interpolate //
 		/////////////////
 
+		// TODO: figure out why r_2 isn't evenly divisible by 6, and why r_2 / 6 +  r_2 / 2 > r_1 + r_inf * 2 + r_n1
+
 		// c_0 = r(0)
 		// c_4 = r(inf)
-		// c_1 = r(0)/2 + r(1)/3 - r(-1) + r(-2)/6 - 2r(inf)
-		// c_2 = -r(0) + r(1)/2 + r(-1)/2 - r(inf)
-		// c_3 = -r(0)/2 + r(1)/6 + r(-1)/2 - r(-2)/6 + 2r(inf)
+		// c_1 = r(1) + 2 * r(inf) - r(-1) / 3 - r(0) / 2 - r(2) / 6
+		// c_2 = r(1) / 2 + r(-1) / 2 - r(0) - r(inf)
+		// c_3 = r(0) / 2 + r(2) / 6 - r(-1) / 6 - r(1) / 2 - 2 * r(inf)
 		// c = c_4(m^4) + c_3(m^3) + c_2(m^2) + c_1(m) + r_0
 
 		BigInt c_0 = r_0;
 		BigInt c_4 = r_inf;
-		BigInt c_1 = r_0 / 2 + r_1 / 3 + r_n2 / 6 - r_inf * 2; // - r_n1
-		BigInt c_2 = BigInt() - r_0 + r_1 / 2 - r_inf; // + r_n1 / 2
-		BigInt c_3 = BigInt() - r_0 / 2 + r_1 / 6 - r_n2 / 6 + r_inf * 2; // + r_n1 / 2
+		BigInt c_1 = r_1 + r_inf * 2;
+		BigInt c_2 = r_1 / 2;
+		BigInt c_3 = r_0 / 2 + r_2 / 6;
 		if (r_n1_isNeg) {
-			c_1 += r_n1;
-			c_2 -= r_n1 / 2;
-			c_3 -= r_n1 / 2;
+			c_1 = c_1 + r_n1 / 3;
+			c_2 = c_2 - r_n1;
+			c_3 = c_3 + r_n1 / 6;
 		} else {
-			c_1 -= r_n1;
-			c_2 += r_n1 / 2;
-			c_3 += r_n1 / 2;
+			c_1 = c_1 - r_n1 / 3;
+			c_2 = c_2 + r_n1;
+			c_3 = c_3 - r_n1 / 6;
 		}
+		BigInt t = r_0 / 2;
+		c_1 = c_1 - t;
+		t = r_2 / 6;
+		c_1 = c_1 - t;
+		c_2 = c_2 - r_0 - r_inf;
+		c_3 = c_3 - r_1 / 2 - r_inf * 2;
 
 		BigInt c = c_0 + (c_1 << m) + (c_2 << (2 * m)) + (c_3 << (3 * m)) + (c_4 << (4 * m));
 		return c;
